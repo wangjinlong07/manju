@@ -1,0 +1,11 @@
+{
+    "gacha": {
+        "prompt_text": {"node_id": "6", "field_path": ["inputs", "text"]},
+        "character_face_url": {"node_id": "12", "field_path": ["inputs", "image"]},
+        "seed": {"node_id": "3", "field_path": ["inputs", "seed"]}
+    },
+    "video_render": {
+        "approved_image_url": {"node_id": "1", "field_path": ["inputs", "image"]},
+        "motion_type": {"node_id": "5", "field_path": ["inputs", "motion_model"]}
+    }
+}

@@ -1,0 +1,7 @@
+[2026-05-20] 初始化项目 - 创建 ComicCraft-Engine 需求文档和技术设计文档
+[2026-05-20] 新增需求8-场景状态轮询API（GET /api/scene/{scene_id}/status），解决ComfyUI异步回调问题；创建changelog-output Hook
+[2026-05-20] 生成 tasks.md 任务分解文档（8个任务，覆盖全部需求），准备进入编码阶段
+[2026-05-20] 完成全部 39 个实现任务 - 包括 workflow_utils、FastAPI 业务 API（gacha/render_video/status）、ffmpeg_composer、setup_workspace、run.py 统一启动器及全部属性测试和集成测试
+[2026-05-20] 创建 README.md 使用文档 - 包含完整的本地启动指南、API 说明、目录结构和常见问题解答
+[2026-05-20] 修复 setup_workspace.py - reactor-node 原仓库已被 GitHub 封禁，替换为可用的 fork（winngo88/comfyui-reactor-node-swapface）
+[2026-05-20] 移除 reactor-node 插件 - 所有相关仓库均被 GitHub 封禁，该插件（换脸功能）非核心依赖，后续可手动安装

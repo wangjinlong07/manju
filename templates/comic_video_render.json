@@ -1,0 +1,15 @@
+{
+    "1": {
+        "inputs": {
+            "image": ""
+        },
+        "class_type": "LoadImage"
+    },
+    "5": {
+        "inputs": {
+            "motion_model": "",
+            "frames": 16
+        },
+        "class_type": "AnimateDiff"
+    }
+}
