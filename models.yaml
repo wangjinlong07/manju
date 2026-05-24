@@ -1,0 +1,83 @@
+# models.yaml - 动态模型注册表
+# 当前可用：DeepSeek（剧本）+ 硅基流动（生图）+ 智谱（视频）
+
+llm:
+  deepseek-v4-pro:
+    display_name: "DeepSeek V4 Pro"
+    model_name: "deepseek/deepseek-v4-pro"
+    api_base: "https://api.deepseek.com"
+    api_key_env: "DEEPSEEK_API_KEY"
+    supports_thinking: true
+
+  deepseek-v4-flash:
+    display_name: "DeepSeek V4 Flash"
+    model_name: "deepseek/deepseek-v4-flash"
+    api_base: "https://api.deepseek.com"
+    api_key_env: "DEEPSEEK_API_KEY"
+    supports_thinking: true
+
+  # gpt-4o:
+  #   display_name: "OpenAI GPT-4o"
+  #   model_name: "openai/gpt-4o"
+  #   api_base: "https://api.openai.com/v1"
+  #   api_key_env: "OPENAI_API_KEY"
+  #   supports_thinking: false
+
+image:
+  flux-schnell:
+    display_name: "FLUX Schnell (硅基流动)"
+    model_name: "Kwai-Kolors/Kolors"
+    api_base: "https://api.siliconflow.cn/v1"
+    api_key_env: "SILICON_API_KEY"
+    adapter: "openai"
+
+  # gpt-image-2:
+  #   display_name: "OpenAI GPT Image 2"
+  #   model_name: "gpt-image-2"
+  #   api_base: "https://api.openai.com/v1"
+  #   api_key_env: "OPENAI_API_KEY"
+  #   adapter: "openai"
+
+  # nano-banana:
+  #   display_name: "Google Nano Banana 2 (Gemini)"
+  #   model_name: "gemini-2.5-flash-preview-image-generation"
+  #   api_base: "https://generativelanguage.googleapis.com/v1beta"
+  #   api_key_env: "GOOGLE_API_KEY"
+  #   adapter: "gemini"
+
+  # grok-imagine-image:
+  #   display_name: "xAI Grok Imagine Image"
+  #   model_name: "grok-imagine-image-quality"
+  #   api_base: "https://api.x.ai/v1"
+  #   api_key_env: "XAI_API_KEY"
+  #   adapter: "openai"
+
+video:
+  cogvideox3:
+    display_name: "智谱清影 CogVideoX-3"
+    adapter: "CogVideoX3Provider"
+    model_name: "cogvideox-3"
+    api_base: "https://open.bigmodel.cn/api/paas/v4"
+    api_key_env: "ZHIPU_API_KEY"
+
+  # kling-v3:
+  #   display_name: "快手可灵 3.0"
+  #   adapter: "KlingVideoProvider"
+  #   model_name: "kling-v3"
+  #   api_base: "https://api.klingai.com/v1"
+  #   access_key_env: "KLING_ACCESS_KEY"
+  #   secret_key_env: "KLING_SECRET_KEY"
+
+  # seedance-2:
+  #   display_name: "字节极梦 Seedance 2.0"
+  #   adapter: "SeedanceVideoProvider"
+  #   model_name: "dreamina-seedance-2-0-260128"
+  #   api_base: "https://ark.ap-southeast.bytepluses.com/api/v3"
+  #   api_key_env: "SEEDANCE_API_KEY"
+
+  # grok-imagine-video:
+  #   display_name: "xAI Grok Imagine Video"
+  #   adapter: "GrokVideoProvider"
+  #   model_name: "grok-imagine-video"
+  #   api_base: "https://api.x.ai/v1"
+  #   api_key_env: "XAI_API_KEY"

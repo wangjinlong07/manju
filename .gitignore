@@ -1,0 +1,9 @@
+__pycache__/
+*.pyc
+.*
+!.gitignore
+!.env.sample
+**/__init__.py
+tests
+frontend/node_modules/
+frontend/dist/

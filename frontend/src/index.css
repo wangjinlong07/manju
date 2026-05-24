@@ -1,0 +1,94 @@
+@import "tailwindcss";
+
+/* Tailwind v4: 启用 class-based dark mode */
+@custom-variant dark (&:where(.dark, .dark *));
+
+/* React Flow 节点透明化 + overflow visible */
+.react-flow__node {
+  background: transparent !important;
+  border: none !important;
+  box-shadow: none !important;
+  border-radius: 0 !important;
+  overflow: visible !important;
+}
+
+/* 节点内可滚动区域不被 ReactFlow 劫持 */
+.react-flow__node .nowheel {
+  pointer-events: auto;
+}
+
+/* 节点内表单元素禁止触发拖拽 */
+.react-flow__node textarea,
+.react-flow__node input,
+.react-flow__node select,
+.react-flow__node button {
+  pointer-events: auto;
+}
+
+/* 框选样式 */
+.react-flow__selection {
+  background: rgba(168, 85, 247, 0.08) !important;
+  border: 1px solid rgba(168, 85, 247, 0.4) !important;
+  border-radius: 4px;
+}
+
+/* Handle 最高层级，不被 overflow-hidden 裁切 */
+.react-flow__handle {
+  z-index: 100 !important;
+}
+.react-flow__handle-left {
+  left: -6px !important;
+}
+.react-flow__handle-right {
+  right: -6px !important;
+}
+
+/* 连线发光效果 */
+.react-flow__edge-path {
+  filter: drop-shadow(0 0 4px rgba(168, 85, 247, 0.4));
+}
+
+/* Handle 悬浮放大 */
+.react-flow__handle:hover {
+  transform: scale(1.5);
+  transition: transform 0.15s ease;
+}
+
+/* 选中节点发光边框由各自组件内部的 selected 属性及 Tailwind 类管理，以便根据不同节点类型展示对应的专属色彩发光效果 */
+
+/* ─── 全局自定义滚动条：超细 + 暗黑半透明 ─── */
+* {
+  scrollbar-width: thin;
+  scrollbar-color: rgba(255, 255, 255, 0.15) transparent;
+}
+
+::-webkit-scrollbar {
+  width: 4px;
+  height: 4px;
+}
+
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+::-webkit-scrollbar-thumb {
+  background: rgba(255, 255, 255, 0.15);
+  border-radius: 9999px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: rgba(255, 255, 255, 0.3);
+}
+
+/* 浅色模式下的滚动条 */
+:root:not(.dark) {
+  scrollbar-color: rgba(0, 0, 0, 0.15) transparent;
+}
+
+:root:not(.dark) ::-webkit-scrollbar-thumb {
+  background: rgba(0, 0, 0, 0.15);
+}
+
+:root:not(.dark) ::-webkit-scrollbar-thumb:hover {
+  background: rgba(0, 0, 0, 0.3);
+}

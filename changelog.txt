@@ -1,0 +1,123 @@
+[2026-05-21] V2.0 重构启动 - 纯云端 API 架构，移除 ComfyUI 依赖，新增 ModelRouter + DiskCache + 多供应商适配器
+[2026-05-21] 更新需求8 - 引入 LiteLLM 混合路由模式：图像生成委托开源库，视频生成保留自定义适配器；requirements.txt 新增 litellm>=1.0.0
+[2026-05-21] 新增需求9和需求10 - 剧本生成API（LiteLLM completion路由+缓存）和最终音画合成配音API（TTS缓存+MoneyPrinterTurbo合成）
+[2026-05-21] 新增需求11 - Streamlit 即梦式可视化操作台（剧本生成→抽卡审批→视频渲染→配音合成四大模块），完成 V2.0 全部需求定义
+[2026-05-21] 生成 V2.0 技术设计文档 - 四层架构（交互/网关/路由/缓存）、场景状态机、7个正确性属性、严格数据模型、错误处理红线
+[2026-05-21] V2.0 代码实现启动 - 重写 requirements.txt（新增 diskcache/litellm/streamlit/python-dotenv），创建 core/model_router.py（CacheKeyEngine + LiteLLM 图像/剧本路由 + KlingVideoProvider 适配器）
+[2026-05-21] 创建编码纪律 steering 文件 (.kiro/steering/coding-discipline.md) + 生成 V2.0 任务列表（9组任务含5波并行依赖图）
+[2026-05-21] V2.0 全部核心代码完成 - core/__init__.py（数据模型+状态枚举）、core/app.py（5端点+状态机）、core/ffmpeg_composer.py（TTS缓存+合成）、setup_workspace.py、run_api.py、run_webui.py、webui.py（4模块Streamlit前端）、.env模板、.gitignore
+[2026-05-21] V2.0 全部测试通过（22 passed）+ 清理 V1.0 遗留文件 + 重写 README 启动指南
+[2026-05-21] 修复 run_api.py 端口冲突 - 添加 if __name__ == "__main__" 保护，防止 uvicorn reload 模式下子进程重复绑定端口
+[2026-05-21] 修复 LiteLLM provider 名称格式 - 改为 deepseek/deepseek-chat 和 openai/gpt-4o；更新 .env 模板添加 DEEPSEEK_API_KEY
+[2026-05-21] 修复剧本生成 JSON 解析 - 移除 response_format（DeepSeek 不完全兼容），添加 markdown 代码块提取和容错解析逻辑
+[2026-05-21] 修复图像生成 - 移除 seed 参数（DALL-E 3 不支持），seed 仅用于缓存键计算
+[2026-05-21] 配置驱动路由改造 - 新增 models.yaml 动态注册表，重构 ModelRouter 为纯配置驱动（零硬编码），创建 test_flow.py 全流程黑盒测试脚本
+[2026-05-21] 生产级路由引擎覆写 - models.yaml 全量注册表（deepseek/grok3/gpt4o/local-llm/flux-silicon/dalle3/kling/seedance2），model_router.py 强制注入 api_base+api_key，app.py 适配新接口
+[2026-05-21] 修复 model_id 命名空间冲突 - 前端/API 传 yaml key（如 deepseek），而非 LiteLLM model_name（如 deepseek/deepseek-chat）；更新 Pydantic 默认值和 webui 选项
+[2026-05-21] 修复生图路由 - 弃用 LiteLLM image_generation（兼容性差），改为直接 requests 调用 OpenAI-compatible /images/generations 端点；models.yaml image model_name 改为 API 原生模型名
+[2026-05-21] 终极覆写 - CacheKeyEngine 多维特征哈希（含 character_face_url 防缓存污染）、generate_script 剧本引擎完整实现、generate_image 直调 API、generate_video 适配器模式；models.yaml 全量注册表
+[2026-05-21] 新增 Grok Imagine Video 适配器 - GrokVideoProvider + models.yaml video 节点追加 grok-imagine（复用 XAI_API_KEY）
+[2026-05-21] 修复 generate_script 参数顺序 - app.py 调用改为 (llm_provider, theme) 匹配 model_router 的 (model_id, theme) 签名
+[2026-05-21] 前端架构升级 - 弃用 Streamlit，新建 Vite+React+Tailwind 前端工程（frontend/），集成用户提供的商业级暗黑 Glassmorphism UI，Vite proxy 代理后端 API，build 验证通过
+[2026-05-21] 清理死代码 + 标准化模型名 - 删除 webui.py/run_webui.py（旧 Streamlit），移除 streamlit 依赖；models.yaml 全量更新为标准 API model_name（deepseek-v4-pro/flash、gpt-image-1、grok-imagine-image-quality、kling-v3、dreamina-seedance-2-0-260128、grok-imagine-video）；前端动态读取 /api/models 实现真正插拔；LLM 支持 Thinking 模式开关；更新 README 和编码纪律文件
+[2026-05-21] 修复 LiteLLM model_name 格式 - LLM 模型必须用 provider/model 格式（deepseek/deepseek-v4-pro、deepseek/deepseek-v4-flash、openai/gpt-4o），否则 LiteLLM 无法识别路由
+[2026-05-21] 可灵 JWT 双密钥认证 - KlingVideoProvider 改用 Access Key + Secret Key 生成 JWT token 认证（HS256），支持异步任务轮询；.env 拆分为 KLING_ACCESS_KEY + KLING_SECRET_KEY；requirements.txt 新增 PyJWT>=2.8.0
+[2026-05-21] 体验大升级 - 抽卡返回4张候选图（网格选择）、剧本台词+Prompt可编辑、新增 skills/ 目录文件系统驱动的 Skill 预设（丢入.md自动识别）、新增 /api/scene/approve_image 端点、前端全量重写适配新流程
+[2026-05-21] 修复抽卡相同+剧本质量 - 每张候选用唯一UUID避免缓存导致相同结果；剧本System Prompt大幅增强（要求镜头类型/角色外貌一致性/远近景交替/构图指导）；前端新增抽卡数量滑块(1-8)用户自定义；角色参考图改名为"4视图参考"锚定人物一致性；清除旧缓存
+[2026-05-22] 前端架构 V3.0 - 推翻表单式 UI，引入 React Flow 无限画布节点连线系统；3 个自定义节点（ScriptNode/GachaNode/VideoNode）通过 Handle 连线传递数据；右键画布添加节点；暗黑主题 + 动画连线 + MiniMap
+[2026-05-22] Glassmorphism 画布 V3.1 - 对标 LibTV 截图重写全部节点为 liquid-glass 毛玻璃风格（backdrop-blur-xl + bg-zinc-900/40 + border-white/10 + inset shadow）；响应式数据流（连线后下游自动读取上游 output）；左侧快捷工具栏（LibTV 同款）；节点内大图/视频全幅展示；Dot Background + 发光连线 + 选中发光边框
+[2026-05-22] UI 去玩具化 + 交互深度重构 V3.2 - 全面替换 Emoji 为 lucide-react 专业图标；统一暗黑调色板（bg-zinc-900/60 + bg-zinc-950 输入框 + border-zinc-800）；每个节点右上角增加红色 Trash2 删除按钮；开启 deleteKeyCode=[Backspace,Delete] 键盘删除；onConnect 时真正注入上游数据到下游 inputData（propagateData 回调）；下游节点 useEffect 监听 data.inputData 自动填充 prompt/image_url；连线后绿色圆点 pulse 指示器确认连接生效
+[2026-05-22] 终极交互重构 V3.3 - 封杀 window.prompt/alert/confirm（全部替换为 console.error）；移除默认 Controls 改为手搓左下角缩放控制台（ZoomIn/ZoomOut/FitView lucide 图标）；左侧 DnD 组件库（draggable + onDrop screenToFlowPosition）；右键 Glassmorphism 悬浮菜单（绝对定位 + 点击其他区域自动销毁）；onConnect 注入上游 output 到下游 inputData + propagateData 回调双向实时同步
+[2026-05-22] PupuLin 品牌重塑 + 批次二交付 V4.0 - 品牌 SVG 改为 PupuLin 艺术字渐变（移除笑脸+ComicCraft 字样）；新增 Zustand store（theme + canvas 选中节点状态）；底部吸附式控制面板（顶部标签切换/核心设定 Textarea/模型选择器/比例/分辨率/动态 Token 消耗预估）；面板与节点 data 双向绑定；LocalImageNode 桌面拖图片进画布生成节点（Blob URL + Source Handle 传递 character_face_url）；index.html title 改为 PupuLin 噗噗凛
+[2026-05-22] View-Controller 解耦 V4.1 - 三个节点全面瘦身为纯监视器（仅展示状态/图片/视频，移除所有表单）；BottomPanel 重写为上下文动态面板（根据 nodeType 渲染不同控件 + 真实 API 调用 + 双向绑定 setNodes）；面板生成完成后通过 edges 自动推送 output 到下游 inputData；面板 onClose 关闭 + onPaneClick 自动隐藏；PupuLin SVG 品牌改为艺术字渐变
+[2026-05-22] 多态面板重构 V4.2 - BottomPanel 按 nodeType 条件渲染三套完全独立的子面板（ScriptPanel 仅模型+Think+剧本文本域/GachaPanel 全功能视觉版含比例+分辨率+摄像机+Token/VideoPanel 含运镜+时长+帧率标签）；修复节点删除按钮被遮住（CSS overflow:visible）；严格隔离参数域（剧本阶段无视觉参数）
+[2026-05-22] 数据流纠偏 V4.3 - 彻底删除 GachaPanel 中的 character_face_url 手动输入框；新增上游寻址函数 getUpstreamData(nodeId) 遍历 edges 自动获取 ScriptNode prompt + LocalImageNode Blob URL；面板显示"已连接本地垫图"只读状态标签+缩略图；抽卡 payload 中 faceUrl 完全从连线获取；移除面板容器 overflow-y-auto 改为 overflow-hidden 消灭常驻滚动条；VideoPanel 同样从 edges 获取上游 image_url
+[2026-05-22] 双轨色值映射修复 V4.4 - Tailwind v4 启用 class-based dark mode（@custom-variant dark）；全部4个节点组件重写为 dark: 前缀双轨色值（bg-white/60 dark:bg-zinc-900/60, border-zinc-200/50 dark:border-white/10, text-zinc-900 dark:text-zinc-100）；浅色模式节点为晶莹白玻璃+浅灰边框，暗色模式为深黑玻璃+白光边框；输入框统一 bg-zinc-100/50 dark:bg-zinc-950/50；消除硬编码单色导致的主题崩溃
+[2026-05-24] 参数全穿透 V5.0 - 后端 GachaRequest 新增 ratio+resolution 字段并穿透到 generate_image（size/quality 映射表：16:9→1792x1024, 4K→quality:hd）；VideoRenderRequest 新增 duration(5/10/15)+prompt 字段穿透到所有视频适配器；前端移除摄像机按钮+Token 显示+帧率 tab；抽卡数量改为 1/2/4/8 固定选项；视频时长加 15s；左侧组件库新增"导入图片"按钮（input file）；图像面板 tabs 精简为风格/九宫格/高清；高清 tab 自动设 resolution=4K
+[2026-05-24] 视觉对比度+交互增强 V5.1 - 画布背景加深为纯黑(bg-black)拉开与节点对比度；节点背景提亮为 dark:bg-zinc-800/70；Background dots 可见度翻倍(0.06)；移除 MiniMap（色块缩略图无意义）；全部4个节点引入 @reactflow/node-resizer 支持选中后拖拽边界缩放（圆形 handle + 彩色边框指示器）；节点初始带 style width/height
+[2026-05-24] 分镜工作流重构 V5.2 - 后端 system prompt 升级为完整分镜结构（scene_description/character_name/dialogue/character_appearance/shot_type/image_prompt）；新增 SceneNode 分镜节点（展示完整场景信息+可连线到 GachaNode）；ScriptPanel 底部面板改为分镜列表+checkbox 多选+直接编辑+全选+"生成N个分镜节点"按钮；点击后自动在画布上瀑布排列创建 SceneNode 并自动连线 ScriptNode→SceneNode；SceneNode 带紫色主题配色（violet 系）区分于其他节点类型
+[2026-05-24] 配色分类优化 V5.3 - 每种节点类型独立配色方案打破视觉单调：ScriptNode=purple（深紫）、SceneNode=violet（紫罗兰）、GachaNode=sky（天蓝）、VideoNode=indigo（靛蓝）、LocalImageNode=emerald（翠绿）；暗色模式下节点为对应色系的 950/25 超低饱和底色+500/20 微妙边框，浅色模式为 50/80 淡色底+200/60 柔边；节点投影带对应颜色（0.15 透明度）；内容区改为 flex-1 overflow-auto 适应缩放后内容自动撑满
+[2026-05-24] ComfyUI 风格全量重写 V6.0 - 彻底删除底部面板(BottomPanel)；所有交互回归节点内部；对标 ComfyUI 紧凑布局风格（深色系 #1a1a2e 节点底色 + 彩色头部栏 + 标签:值横排 + 紧凑行高）；ScriptNode 内置模型选择/主题输入/Think开关/生成按钮/分镜列表+多选+展开为SceneNode；GachaNode 内置 prompt/模型/比例/分辨率/数量/生成按钮+图片展示；VideoNode 内置描述/模型/运镜/时长/渲染按钮+视频播放；SceneNode 全部字段可直接编辑（场景/台词/image_prompt）；LocalImageNode 极简展示；每种节点独立配色（紫/蓝/靛/绿/翠）
+[2026-05-24] 交互修复+持久化基础 V6.1 - Handle 位置修复（left:-6px/right:-6px 贴卡片边缘）；初始空画布（无默认节点）；连线可删除（edgesFocusable+edgesUpdatable+Backspace）；新增 schema.sql（projects 表存画布 JSON + assets 表存生成产物 URL）；.env 新增 DATABASE_URL + REDIS_URL 占位
+
+[2026-05-24] 文稿持久化全栈实现 V6.2 - core/database.py（asyncpg连接池+projects/assets CRUD）；app.py 新增6个文稿API端点（CRUD+assets列表）+ startup/shutdown 生命周期；生成时自动写 assets 表（gacha+render_video 传 project_id）；前端 Zustand projectStore + ProjectManager 弹窗（列表/新建/重命名/删除）+ 画布5秒自动保存 + 手动保存指示器；GachaNode/VideoNode 新增悬浮下载按钮（Download icon）；requirements.txt 新增 asyncpg>=0.29.0 + redis>=5.0.0
+
+[2026-05-24] 保存状态修复+时区修复 V6.2.1 - 引入 dirty 标志位：画布变更→Save图标，保存完成→Check+时间，切换/新建项目→重置为Save；后端 updated_at 改用 datetime.now(timezone.utc) 确保时区正确；前端时间显示强制 Asia/Shanghai 时区；品牌栏时间改 24h 制
+
+[2026-05-24] 滚动条美化 V6.2.2 - 全局自定义滚动条：4px超细宽度 + 圆角 + 半透明白色（暗色）/半透明黑色（浅色）+ hover加深；消灭原生粗白滚动条
+
+[2026-05-24] 交互修复+中文优先+死代码清理 V6.3 - 滚轮改为平移（zoomOnScroll=false+panOnScroll=true，Ctrl+滚轮才缩放）；分镜列表预览改为完整 scene_description 展示；SceneNode 增加角色外貌字段+角色名可编辑+中文生图描述；system prompt 强制全字段中文输出+新增 image_prompt_cn 中文版；编码纪律新增"中文优先展示原则"和"skills/ 用户管理"规则；删除死代码 BottomPanel.jsx（-10KB CSS）
+
+[2026-05-24] 节点内滚动+分镜间距修复 V6.3.1 - 所有节点 content 区域加 onWheel stopPropagation 阻止画布劫持滚轮事件（节点内正常滚动）；展开分镜间距从 220/240px 加大到 400px 消除卡片重叠
+
+[2026-05-24] 节点滚动+框选操作重构 V6.3.2 - 取消画布 panOnScroll（画布不再劫持任何滚轮事件）；节点内加 nowheel 类+stopPropagation 双保险实现节点内滚动；画布平移改为 Space+拖拽 或 中键拖拽（panOnDrag=[1]+panActivationKeyCode=Space）；新增 selectionOnDrag 左键空白区域拖拽框选节点+partial 模式部分相交即选中；框选后 Backspace/Delete 批量删除、拖拽批量移动；框选紫色半透明视觉样式
+
+[2026-05-24] SceneNode 文字格式统一 V6.3.3 - 所有 textarea 统一为 text-[11px] text-zinc-200（场景/台词/角色/生图四个字段字号颜色完全一致）；角色名输入从 text-[9px] 统一为 text-[10px]；textarea 高度微调适配内容量
+
+[2026-05-24] 分镜自由文本重构 V6.4 - SceneNode 从4个固定表单改为单个 textarea 自由编辑（格式：场景：xxx\n角色：xxx\n台词：xxx\n描述：xxx）；AI 返回数据自动序列化为标记文本；用户编辑实时同步 output 到下游 GachaNode（修复编辑不生效的数据流断裂问题）；GachaNode 标签从 "prompt" 改为 "描述"；GachaNode 始终同步上游最新文本（去掉 !prompt 守卫）；分镜完整文本作为生图关键字传递给后端
+
+[2026-05-24] 节点内文本选中修复 V6.4.1 - 所有节点 content 区域加 nodrag 类名，阻止 ReactFlow 将 textarea/input 内的鼠标拖拽解释为移动节点；现在可以正常在文本框内选中文字
+
+[2026-05-24] 多图画廊+垫图连接修复 V6.5 - GachaNode 支持多图翻页浏览（左右箭头+底部圆点指示器+点击选中）；选中的图片作为 output 传递下游；faceUrl 上游寻址改为遍历所有 incoming edges 独立检查 localImageNode 和 sceneNode 类型（修复前置图片不被识别的问题）；header 显示"垫图已连接"绿色状态标签；默认数量改为2
+
+[2026-05-24] 接入智谱 CogVideoX-3 视频模型 V6.6 - 新增 CogVideoX3Provider 适配器（异步任务提交+轮询结果）；支持三种模式：文生视频(text2video)、图生视频(image2video)、首尾帧生视频(first_last_frame)；models.yaml 注册 cogvideox3-text/cogvideox3-image/cogvideox3-frame 三个入口；.env 新增 ZHIPU_API_KEY；BaseVideoProvider 签名统一加 **kwargs 传递 config
+
+[2026-05-24] CogVideoX-3 合并为单模型 V6.6.1 - 三个入口合并为一个 cogvideox3（智谱清影 CogVideoX-3）；适配器根据实际输入自动判断模式：有两个URL=首尾帧，有单图=图生视频，无图=文生视频；移除 yaml 中的 mode 字段
+
+[2026-05-24] VideoNode 三模式+首尾帧提取 V6.7 - VideoNode 新增模式切换器（图生视频/文生视频/首尾帧三个 tab 按钮）；首尾帧模式下显示尾帧区域（缩略图预览+从视频提取按钮+手动上传按钮）；提取尾帧通过 canvas 截取视频最后一帧为 dataURL；文生视频模式无需上游图片仅需描述文字；CogVideoX-3 适配器自动接收 motion_type=模式名 判断走哪条逻辑；移除运镜下拉（模式选择替代）；时长限制为 5s/10s（CogVideoX-3 支持范围）
+
+[2026-05-24] 浮动工具栏架构重构 V7.0 - 新增 NodeToolbar 浮动组件（选中节点后顶部居中浮现上下文操作按钮）；GachaNode 瘦身为纯展示（图片画廊+9宫格切换+翻页+指示器），所有操作移至工具栏；VideoNode 瘦身为纯展示（视频预览+模式标签）；工具栏按节点类型多态渲染：ScriptNode(生成/Think/设置)、GachaNode(抽卡/9宫格/翻页/选中/下载/重生/参数)、VideoNode(图生/文生/首尾帧/提取帧/下载/参数)、LocalImageNode(替换/下载)；恢复9宫格展示能力；工具栏动作统一由 handleToolbarAction 分发处理
+
+[2026-05-24] 精简模型注册表 V7.0.1 - models.yaml 只保留有 API Key 的三家：DeepSeek V4 Pro/Flash（剧本）、硅基流动 FLUX Schnell（生图）、智谱 CogVideoX-3（视频）；其余全部注释掉（无 key 无余额）
+
+[2026-05-24] 商业级前端重构 V8.0 - 对标 DreamFactory 风格三种自包含节点（剧本/生图/视频各自内置完整操作面板+参数控件+生成按钮）；废弃 SceneNode 和 NodeToolbar（已删除）；连线即数据流（上游 output 自动注入下游 inputData）；节点视觉升级为渐变色标题栏+深色卡片+发光 Handle+选中外发光；App.jsx 瘦身 40%（移除所有 toolbar/panel/scene 逻辑）；编码纪律新增"纪律7：前端节点架构规则"
+
+[2026-05-24] 模型硬编码清理 V8.0.1 - canvas store 移除 TOKEN_PRICES 硬编码模型列表（旧残留 gpt-image-2/kling-v3/seedance-2 等）；前端三个节点的模型下拉框完全由 /api/models 接口（读 models.yaml）动态驱动，零硬编码
+
+[2026-05-24] 分镜→图像数据流贯通 V8.1 - ScriptNode 分镜列表支持多选+批量展开为 GachaNode（每个分镜→独立 GachaNode+自动连线+注入对应 prompt）；单个分镜 hover 显示快速展开按钮；GachaNode 上游读取兼容 scenes 数组格式（取 image_prompt_cn→image_prompt→scene_description）；展开时自动拼接完整中文描述（场景+角色+台词+描述）作为生图 prompt；连线即数据流完全贯通
+
+[2026-05-24] 描述框按点格式修复 V8.1.1 - GachaNode 移除4个固定表单字段，回归单个 textarea 描述框；分镜数据自动序列化为按点分行格式（· 场景：xxx / · 角色：xxx / · 台词：xxx / · 画面：xxx / · 镜头：xxx）；用户可自由编辑每一点；完整多行文本直接传给后端生图 API；placeholder 示范正确格式引导用户
+
+[2026-05-24] 参考图内嵌+九宫格默认 V8.2 - GachaNode 输入区上方显示参考图缩略图条（从连线自动收集所有 LocalImageNode/GachaNode 的图片，像 ChatGPT 贴图内嵌展示）；支持多张参考图同时传给后端（reference_images 数组）；生成结果默认九宫格平铺展示（2张=2列/4张+=3列）；点击某张切换为单图大图浏览；ScriptNode 新增左侧 target Handle 接收参考图连线；展开分镜时自动把参考图连线到每个 GachaNode
+
+[2026-05-24] 节点极简化+详情弹层 V9.0 - 彻底推翻节点内嵌表单模式；画布节点瘦身为纯结果卡片（图片节点=自适应比例图片、视频节点=播放器、剧本节点=分镜摘要）；点击节点弹出 ChatGPT 风格详情面板（居中 Modal，560px 宽）；面板内展示：参考图缩略图条+按点描述输入框+参数横排+生成按钮+九宫格结果；图片 object-contain 自适应所有比例不再裁切；参考图从连线自动收集多张（支持 LocalImageNode+GachaNode 混连）；九宫格默认平铺+点击选中高亮传下游；剧本面板含全选+批量展开为 GachaNode+自动连接参考图
+
+[2026-05-24] 悬浮气泡+底部输入栏 V9.1 - 彻底删除 Dialog/Modal 详情面板；改为对标 LibTV 的悬浮气泡（fixed 右上角，展示参考图缩略图+markdown 描述文字+模型/比例标签，纯展示无表单）；新增底部全局输入栏（对标 ChatGPT/DeepSeek 输入框：左侧贴图缩略图+中间自适应高度 textarea+右侧发送按钮）；选中节点后输入栏自动绑定目标节点+预填上游分镜文本；Enter 发送直接调 API 生成结果写入节点；输入栏 disabled 态引导"选中一个节点后输入"
+
+[2026-05-24] 节点内嵌输入栏 V9.2 - 彻底删除 DetailPanel/InputBar 全局组件；输入栏直接嵌入每个节点下方（点击选中展开，未选中隐藏）；跟随节点定位，不是 fixed/dialog；每种节点输入栏内容不同：GachaNode=参考图缩略图+文本描述+发送+模型/比例/分辨率/数量 pill；VideoNode=上游图预览+描述+发送+模式pill(图生/文生/首尾帧)+模型/时长；ScriptNode=参考图+主题输入+发送+模型+深度思考开关+分镜列表可选+展开为图片节点；所有 pill 用圆角胶囊按钮不是表单；九宫格结果默认平铺
+
+[2026-05-24] LibTV 对标视觉重写 V9.3 - 图片卡片和输入框是两个独立的圆角卡片（图片小+圆角2xl，输入框宽380px+悬浮在下方有间距）；Loading 遮罩（黑半透明+spinner 覆盖图片/视频区，生成中一目了然）；前端 console.log 打印每次 API 调用的完整参数（模型/prompt/图片URL/比例等）；后端 logger 增强打印 prompt+face_url+duration+motion_type 完整入参；pill 选项改为无边框胶囊（bg-[#253040] rounded-full h-7）；发送按钮改为圆形蓝色（对标 LibTV/ChatGPT）；参考图缩略图在输入框左侧内嵌（11x11 圆角）
+
+[2026-05-24] Handle 错位+抖动修复 V9.4 - 输入框改为 absolute 定位（top:100% mt-3 z-50）不参与节点尺寸计算，彻底消除选中抖动和 Handle 错位；节点固定宽度（图片280/剧本300）；输入框独立520px宽居中悬浮；图片预览只显示选中的一张（不再九宫格全展）；hover 下载按钮恢复；pill 顺序统一为模型→比例→分辨率→数量→参考（图片）/ 模型→模式→时长（视频）/ 模型→深度思考（剧本）；参考图/文本/选项三行独立排布
+
+[2026-05-24] 文本5行+Handle修复+缩放+九视图 V9.5 - textarea 改为 min-h-[110px] 展示满5行后才滚动；Handle z-index:50 确保不被节点内容遮挡；三个节点引入 @reactflow/node-resizer 支持拖拽缩放（图片/视频 w-full 自适应容器）；GachaNode pill 行新增"九视图"按钮（基于选中图片生成 3x3 多角度一致性视图，传 1:1 比例+参考图锁定）
+
+[2026-05-24] 发送按钮重定位+缩放修复 V9.6 - 发送按钮从 textarea 旁移到 pill 行最右侧（flex-1 min-w-[100px] 间距撑开）；textarea 改为 w-full 独占一行；节点缩放修复：移除 style 硬编码宽度改为 minWidth（NodeResizer 可动态改 width/height）；导入 node-resizer 样式表确保边框可见
+
+[2026-05-24] 九视图+Handle+缩放+日志终极修复 V9.7 - 九视图 handleNineView 逻辑确认完整（调 /api/scene/gacha 传当前图为参考+1:1比例+九宫格prompt）；Handle 从 overflow-hidden 的卡片内移到外层 relative 容器（不再被裁切）；z-index:100 确保最顶层；后端三个生成端点新增 print() 强制控制台输出完整参数（不依赖 loguru 配置）；createNode 创建时注入 style:{width,height}；节点内图片/视频改为 w-full h-full 填满容器
+
+[2026-05-24] 输入框自适应宽+等比缩放+Handle修复 V9.8 - 输入框宽度改为 w-fit（pill 行 flex-nowrap 强制不换行，宽度由内容+100px间距+发送按钮自然撑开，不再写死）；NodeResizer 加 keepAspectRatio 等比缩放（禁止单独拉高度导致空白）；ScriptNode Handle 移到 overflow-hidden 卡片外层（和 GachaNode/VideoNode 一致）
+
+[2026-05-24] 422修复 V9.8.1 - GachaRequest 新增 reference_images:list=[] 字段（前端传多张参考图URL）；VideoRenderRequest 新增 image_url 兼容字段+duration 改为 int 类型；image_provider 默认值改为 flux-schnell；video_provider 默认值改为 cogvideox3；app.py 自动将 image_url 回填到 approved_image_url
+
+[2026-05-24] 多图+参考图+九视图后端修复 V9.9 - gacha print 增加 n 值输出确认；reference_images 传入 generate_image 并注入 prompt（保持一致性提示）；九视图检测 prompt 关键词强制 1:1 比例；app.py 优先使用 reference_images[0] 作为 face_url（含义统一为参考图）
+
+[2026-05-24] 多图候选选择 V9.9.1 - GachaNode 输入框区域新增候选图网格（4列），生成多张后在输入栏展示所有候选供用户点击选中（选中的那张高亮 ring-2 ring-sky-400 并更新为节点预览图+传递下游）；节点卡片始终只展示选中的那一张
+
+[2026-05-24] 参考图语义修正 V9.9.2 - 移除 face_url 假设（不再默认第一张是角色图）；reference_images 全部逐张列出 URL 注入 prompt（格式：参考图1: url / 参考图2: url）；用户在描述中自行标注图N是角色/场景/道具；后端不做任何语义推断，完全由用户描述+模型理解驱动一致性
+
+[2026-05-24] 异步并发修复 V10.0 - 三个生成端点（gacha/script/video）的同步 requests 调用改为 asyncio.to_thread() 异步执行；不再阻塞 uvicorn 事件循环；多个生图/视频/剧本请求可并发处理互不等待
+
+[2026-05-24] V10.1 设计规划 - 编码纪律文件新增"纪律8：V10.1待办"：Skill 三分类（script/image/video）+ / 唤起选择器；@ 引用参考图语法（输入@弹出图列表+插入标记+后端解析替换）；代码清理计划（删除 character_face_url/seed 前端暴露/NodeResizer/重复 changelog 条目）；generate_image 签名简化
+
+[2026-05-24] V10.1 全量实现 - skills/ 拆分为 script/image/video 三子目录（现有4个skill移入image/）；后端 /api/models 返回 skills 按类型分组；删除 character_face_url + seed 字段；generate_image 签名简化为 (model_id, prompt, n, ratio, resolution, reference_images, skill)；后端解析 prompt 中 @参考图N 标记替换为实际 URL；前端三节点 textarea 支持 / 唤起 skill 选择器 + @ 唤起参考图选择器；删除 NodeResizer（改用画布缩放）；清理 changelog 重复条目（V9.4/V9.7）；build 验证通过
+
+[2026-05-24] README 全量重写 - 更正项目名为 PupuLin 噗噗凛；更新架构描述（React Flow 画布+节点连线数据流）；修正可用模型表（仅列实际启用的3家）；新增 Skill 风格预设说明（三子目录+/唤起+@参考图语法）；修正端口号为5173；补全 API 端点表（文稿CRUD+approve_image）；更新项目结构树（database.py+skills子目录+nodes/）；删除过时的 MoneyPrinterTurbo/Streamlit 引用
+
+[2026-05-24] 光标插入修复+恢复缩放 - / 和 @ 插入改为基于 selectionStart 光标位置（不再追加到末尾）；恢复 NodeResizer 等比缩放功能（三节点+App.jsx createNode style）；恢复 @reactflow/node-resizer 依赖
+
+[2026-05-24] 生图限流防护 - generate_image 循环加 1s 间隔防 IPM 限流；429 时自动等 3s 重试一次；重试仍失败则返回已生成的部分结果（不再直接 500 崩溃）
+
+[2026-05-24] Handle 错位+输入框命中修复 - 加载文稿后 useUpdateNodeInternals 强制更新所有节点尺寸 + fitView 修正连线位置；移除节点 style.height（改为高度自适应内容）避免固定高度与实际内容不匹配导致 Handle 连到左上/右上角；保存时自动剥离 height 字段；加载时清理旧数据中的 height
+
+[2026-05-24] 输入框误触发修复 - NodeResizer 改为 selected 时才渲染（未选中时不存在 DOM，不扩大节点命中区域）；节点外层加 h-fit 确保高度紧贴内容；输入框加 onMouseDown stopPropagation 阻止点击输入框时冒泡触发节点 select
