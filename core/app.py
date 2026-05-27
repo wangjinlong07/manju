@@ -14,7 +14,6 @@ from core import (
     ComposeRequest,
     GachaRequest,
     SceneStatus,
-    ScriptGenerateRequest,
     VideoRenderRequest,
 )
 from core.model_router import ModelRouter
@@ -106,25 +105,7 @@ async def get_models():
     return router.get_models_for_frontend()
 
 
-@app.post("/api/script/generate")
-async def script_generate(req: ScriptGenerateRequest):
-    print(f"\n{'='*60}\n[API CALL] /api/script/generate\n  theme: {req.theme[:100]}\n  model: {req.llm_provider}\n  thinking: {req.thinking}\n  skill: {req.skill}\n{'='*60}")
-    logger.info(f"[ScriptGenerate] theme={req.theme}, provider={req.llm_provider}, thinking={req.thinking}, skill={req.skill}")
-    scenes = await asyncio.to_thread(router.generate_script, req.llm_provider, req.theme, req.thinking, req.skill)
 
-    for scene in scenes:
-        scene_id = str(uuid.uuid4())
-        scene["scene_id"] = scene_id
-        MOCK_DB[scene_id] = {
-            "scene_id": scene_id,
-            "status": SceneStatus.CREATED,
-            "image_url": None,
-            "video_url": None,
-            "download_url": None,
-        }
-        logger.info(f"[ScriptGenerate] Scene created: {scene_id}")
-
-    return {"scenes": scenes}
 
 
 @app.post("/api/scene/gacha")

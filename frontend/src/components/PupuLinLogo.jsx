@@ -1,59 +1,73 @@
 import React from 'react';
 
-export default function PupuLinLogo({ size = 36, className = "" }) {
+/**
+ * PupuLin Brand Logo — 参考原型图 pilipulu 的双环 P 图标 + 现代无衬线字体设计
+ * 
+ * Props:
+ *   size     — 图标高度 (px), 默认 28
+ *   showText — 是否显示文字，默认 true
+ *   className — 额外 className
+ *   subtitle — 右侧副标题，如 "AI剧创作"
+ */
+export default function PupuLinLogo({ size = 28, showText = true, className = '', subtitle = '' }) {
+  const iconW = size;
+  const iconH = size;
+  const textScale = size / 28;
+
   return (
-    <svg 
-      width={size * (140 / 36)} 
-      height={size} 
-      viewBox="0 0 140 36" 
-      fill="none" 
-      xmlns="http://www.w3.org/2000/svg"
-      className={`select-none ${className}`}
-    >
-      <defs>
-        <linearGradient id="proBrandGrad" x1="0%" y1="0%" x2="100%" y2="100%">
-          <stop offset="0%" stopColor="#a855f7" /> {/* purple-500 */}
-          <stop offset="50%" stopColor="#6366f1" /> {/* indigo-500 */}
-          <stop offset="100%" stopColor="#3b82f6" /> {/* blue-500 */}
-        </linearGradient>
-      </defs>
+    <div className={`flex items-center gap-2 select-none ${className}`}>
+      {/* Icon: 双环 P 图标 — 参考原型 pilipulu 的圆润气泡风格 */}
+      <svg width={iconW} height={iconH} viewBox="0 0 32 32" fill="none" xmlns="http://www.w3.org/2000/svg">
+        <defs>
+          <linearGradient id="pupulin-icon-grad" x1="0%" y1="0%" x2="100%" y2="100%">
+            <stop offset="0%" stopColor="#818cf8" />
+            <stop offset="100%" stopColor="#6366f1" />
+          </linearGradient>
+        </defs>
+        {/* 外圆：品牌主色气泡 */}
+        <circle cx="16" cy="16" r="15" fill="url(#pupulin-icon-grad)" />
+        {/* 内部 P 字母 — 圆润几何风格 */}
+        <path
+          d="M 11 8 L 11 24 L 14 24 L 14 19 L 18 19 C 21.5 19 24 16.5 24 13.5 C 24 10.5 21.5 8 18 8 L 11 8 Z M 14 11 L 17.5 11 C 19.5 11 21 12.2 21 13.5 C 21 14.8 19.5 16 17.5 16 L 14 16 L 14 11 Z"
+          fill="white"
+          opacity="0.95"
+        />
+        {/* 装饰：小气泡圆点 — 呼应 "噗噗" 的气泡意象 */}
+        <circle cx="24" cy="7" r="2.5" fill="white" opacity="0.3" />
+        <circle cx="27" cy="11" r="1.5" fill="white" opacity="0.2" />
+      </svg>
 
-      {/* 动态重叠面板图标 */}
-      <g transform="translate(0, 4)">
-        {/* 后置玻璃切片：浅色模式变灰，暗色模式变深灰 */}
-        <path 
-          className="fill-zinc-300 dark:fill-zinc-700 transition-colors duration-300"
-          d="M 6 0 L 20 0 C 22 0 23 1 22.5 2.5 L 16 22 C 15.5 23.5 14 24 12 24 L 2 24 C 0 24 -0.5 23 0.5 21.5 L 4 2.5 C 4.5 1 6 0 8 0 Z" 
-          opacity="0.6"
-        />
-        {/* 前置高光主题切片 (渐变色保持不变，维持品牌锚点) */}
-        <path 
-          d="M 12 4 L 28 4 C 30 4 31 5 30.5 6.5 L 24 26 C 23.5 27.5 22 28 20 28 L 8 28 C 6 28 5.5 27 6.5 25.5 L 10 6.5 C 10.5 5 12 4 14 4 Z" 
-          fill="url(#proBrandGrad)"
-        />
-        {/* 内部极简锐利的播放/星火剪影 */}
-        <path 
-          d="M 19 12 L 23 16 L 18 19 Z" 
-          fill="#ffffff" 
-          opacity="0.9"
-        />
-      </g>
-
-      {/* 高级无衬线斜体排版 */}
-      <text 
-        x="38" 
-        y="26" 
-        fontFamily="system-ui, -apple-system, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif" 
-        fontSize="22" 
-        fontWeight="900" 
-        fontStyle="italic" 
-        letterSpacing="-0.04em"
-      >
-        {/* 核心修复：Pupu 字样在浅色模式下为深黑，暗色模式下为亮白 */}
-        <tspan className="fill-zinc-900 dark:fill-zinc-100 transition-colors duration-300">Pupu</tspan>
-        {/* Lin 字样永久保持品牌渐变色 */}
-        <tspan fill="url(#proBrandGrad)">Lin</tspan>
-      </text>
-    </svg>
+      {/* Text: PupuLin 现代无衬线字体 */}
+      {showText && (
+        <div className="flex items-baseline gap-0" style={{ fontSize: `${18 * textScale}px` }}>
+          <span
+            className="font-bold tracking-tight text-zinc-900 dark:text-zinc-100"
+            style={{ fontFamily: "'Inter', 'SF Pro Display', system-ui, -apple-system, sans-serif" }}
+          >
+            Pupu
+          </span>
+          <span
+            className="font-bold tracking-tight text-indigo-500 dark:text-indigo-400"
+            style={{ fontFamily: "'Inter', 'SF Pro Display', system-ui, -apple-system, sans-serif" }}
+          >
+            Lin
+          </span>
+          {subtitle && (
+            <>
+              <span className="mx-2 w-px h-4 bg-zinc-300 dark:bg-zinc-700 inline-block self-center" />
+              <span
+                className="text-zinc-500 dark:text-zinc-400 font-medium"
+                style={{
+                  fontSize: `${14 * textScale}px`,
+                  fontFamily: "'Inter', 'SF Pro Display', system-ui, -apple-system, sans-serif",
+                }}
+              >
+                {subtitle}
+              </span>
+            </>
+          )}
+        </div>
+      )}
+    </div>
   );
 }

@@ -1,7 +1,7 @@
 @import "tailwindcss";
 
 /* Tailwind v4: 启用 class-based dark mode */
-@custom-variant dark (&:where(.dark, .dark *));
+@variant dark (&:where(.dark, .dark *));
 
 /* React Flow 节点透明化 + overflow visible */
 .react-flow__node {
@@ -91,4 +91,13 @@
 
 :root:not(.dark) ::-webkit-scrollbar-thumb:hover {
   background: rgba(0, 0, 0, 0.3);
+}
+
+/* 隐藏滚动条 */
+.scrollbar-none::-webkit-scrollbar {
+  display: none;
+}
+.scrollbar-none {
+  -ms-overflow-style: none;  /* IE and Edge */
+  scrollbar-width: none;  /* Firefox */
 }

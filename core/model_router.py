@@ -6,6 +6,7 @@ import json
 import hashlib
 import re
 from abc import ABC, abstractmethod
+import requests
 
 from loguru import logger
 import litellm

@@ -25,12 +25,12 @@ export const useProjectStore = create((set, get) => ({
     }
   },
 
-  createProject: async (name = '未命名文稿') => {
+  createProject: async (name = '未命名文稿', ratio = '16:9') => {
     try {
       const res = await fetch('/api/projects', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ name, canvas_json: { nodes: [], edges: [] } }),
+        body: JSON.stringify({ name, canvas_json: { ratio, nodes: [], edges: [] } }),
       });
       const project = await res.json();
       set((s) => ({ projects: [project, ...s.projects], currentProject: project, lastSaved: null, dirty: false }));

@@ -53,7 +53,7 @@ async def list_projects(limit: int = 50, offset: int = 0) -> list[dict]:
     """List projects ordered by updated_at DESC."""
     pool = await get_pool()
     rows = await pool.fetch(
-        """SELECT id, name, created_at, updated_at
+        """SELECT id, name, canvas_json->>'ratio' AS ratio, created_at, updated_at
            FROM projects ORDER BY updated_at DESC
            LIMIT $1 OFFSET $2""",
         limit, offset,
@@ -177,6 +177,7 @@ def _row_to_project_summary(row) -> dict:
     return {
         "id": str(row["id"]),
         "name": row["name"],
+        "ratio": row.get("ratio") or "16:9",
         "created_at": row["created_at"].isoformat(),
         "updated_at": row["updated_at"].isoformat(),
     }
