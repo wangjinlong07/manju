@@ -25,28 +25,6 @@ import subprocess
 import time
 import mimetypes
 import sys
-# ════════════════════════════════════════════════════════════════
-#  Load .env file manually for local runs (avoiding dependency on python-dotenv)
-# ════════════════════════════════════════════════════════════════
-def _load_env_file():
-    import os
-    env_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), ".env")
-    if os.path.exists(env_path):
-        try:
-            with open(env_path, "r", encoding="utf-8") as f:
-                for line in f:
-                    line = line.strip()
-                    if not line or line.startswith("#"):
-                        continue
-                    parts = line.split("=", 1)
-                    if len(parts) == 2:
-                        key, val = parts[0].strip(), parts[1].strip()
-                        if key not in os.environ:
-                            os.environ[key] = val
-        except Exception as e:
-            print(f"[env_loader] Warning: failed to load .env: {e}")
-_load_env_file()
-
 import urllib.request
 import urllib.error
 import urllib.parse
@@ -335,9 +313,9 @@ DEFAULT_SUB_CONTACT_TEXT = os.environ.get(
 ).strip() or "联系管理员获取授权码"
 DEFAULT_SUB_CONTACT_WECHAT = os.environ.get(
     "AIC_SUB_CONTACT_WECHAT",
-    "vv2643162286",
-).strip() or "vv2643162286"
-DEFAULT_SUB_CONTACT_IMAGE_URL = "/images/wechat.png"
+    "yumengashuo",
+).strip() or "yumengashuo"
+DEFAULT_SUB_CONTACT_IMAGE_URL = "https://api.ashuoai.com/static/contact/wechat.png"
 DEFAULT_SUB_CONTACT_URL = os.environ.get(
     "AIC_SUB_CONTACT_URL",
     DEFAULT_SUB_CONTACT_IMAGE_URL,
@@ -1519,9 +1497,6 @@ def _request_passes_local_security(handler, path):
     origin = handler.headers.get("Origin", "")
     if origin:
         return _is_allowed_origin(handler, origin) or _request_has_valid_local_token(handler)
-    host = handler.headers.get("Host", "")
-    if host and _is_allowed_origin(handler, "http://" + host):
-        return True
     return _client_is_loopback(handler) or _request_has_valid_local_token(handler)
 
 
@@ -2442,198 +2417,6 @@ def _resolve_local_virtual_path(src_path):
     return MEDIA_FILE_ROUTE_SERVICE.resolve_local_virtual_path(src_path)
 
 
-
-# ════════════════════════════════════════════════════════════════
-#  Central subscription licensing handlers (HMAC-SHA256 Based)
-# ════════════════════════════════════════════════════════════════
-_SUBSCRIPTION_DB_LOCK = threading.Lock()
-SUBSCRIPTION_DB_FILE = os.path.join("data", "subscriptions.json")
-
-CUSTOM_VIP_MODELS = [
-    "apimart/doubao-seedance-2.0-fast",
-    "apimart/doubao-seedance-2.0-fast-face",
-    "apimart/doubao-seedance-1-0-pro-quality",
-    "apimart/doubao-seedance-1-0-pro-fast",
-    "apimart/happyhorse-1.0",
-    "apimart/veo3-fast",
-    "apimart/grok-imagine-1.0",
-    "apimart/omni-flash-ext",
-    "apimart/wan2.7",
-    "apimart/kling-v3-omni",
-    "apimart/kling-v3",
-    "apimart/minimax-hailuo",
-    "apimart/minimax-hailuo-2.3",
-    "apimart/kling-v1-5",
-    "apimart/viduq3",
-    "volcengine/seedance-2.0",
-    "volcengine/seedance-2.0-fast",
-    "runninghub-model/seedance-2.0",
-    "runninghub-model/happyhorse-1.0",
-    "runninghub-model/veo3",
-    "runninghub-model/wan2.7",
-    "runninghub-model/hailuo-02",
-    "runninghub-model/hailuo-2.3",
-    "runninghub-model/kling-v3",
-    "runninghub-model/kling-o3",
-    "runninghub-model/kling-video-o1",
-]
-
-def _get_all_entitled_model_ids():
-    base = list(VIDEO_VIP_MODEL_NAME_MAP.keys())
-    for m in CUSTOM_VIP_MODELS:
-        if m not in base:
-            base.append(m)
-    return base
-
-def _load_subscriptions():
-    with _SUBSCRIPTION_DB_LOCK:
-        if not os.path.exists(SUBSCRIPTION_DB_FILE):
-            return {}
-        try:
-            with open(SUBSCRIPTION_DB_FILE, "r", encoding="utf-8") as f:
-                return json.load(f)
-        except Exception:
-            return {}
-
-def _save_subscriptions(data):
-    with _SUBSCRIPTION_DB_LOCK:
-        os.makedirs(os.path.dirname(SUBSCRIPTION_DB_FILE), exist_ok=True)
-        tmp = SUBSCRIPTION_DB_FILE + ".tmp"
-        try:
-            with open(tmp, "w", encoding="utf-8") as f:
-                json.dump(data, f, ensure_ascii=False, indent=2)
-            os.replace(tmp, SUBSCRIPTION_DB_FILE)
-            return True
-        except Exception as e:
-            print(f"[subscription_server] failed to save subscription: {e}")
-            if os.path.exists(tmp):
-                try: os.remove(tmp)
-                except Exception: pass
-            return False
-
-def _handle_central_subscription_status(handler):
-    import urllib.parse
-    import time
-    parsed = urllib.parse.urlsplit(handler.path)
-    qs = urllib.parse.parse_qs(parsed.query)
-    install_id = (qs.get("installId") or [""])[0].strip()
-    if not install_id:
-        _json_ok(handler, {"success": False, "message": "Missing installId"})
-        return
-    
-    subs = _load_subscriptions()
-    sub = subs.get(install_id)
-    
-    if sub:
-        expires_at = sub.get("expiresAt", 0)
-        if expires_at > int(time.time()):
-            _json_ok(handler, {
-                "success": True,
-                "data": {
-                    "status": "active",
-                    "expiresAt": expires_at,
-                    "entitledModelIds": _get_all_entitled_model_ids()
-                }
-            })
-            return
-            
-    _json_ok(handler, {
-        "success": True,
-        "data": {
-            "status": "none",
-            "expiresAt": 0,
-            "entitledModelIds": _get_all_entitled_model_ids()
-        }
-    })
-
-def _handle_central_subscription_activate(handler):
-    import base64
-    import hmac
-    import hashlib
-    import time
-    
-    content_length = int(handler.headers.get("Content-Length", 0))
-    body = handler.rfile.read(content_length)
-    try:
-        data = json.loads(body)
-    except Exception:
-        _json_ok(handler, {"success": False, "message": "Invalid JSON"})
-        return
-        
-    install_id = str(data.get("installId") or "").strip()
-    cdkey = str(data.get("cdkey") or "").strip()
-    device_id = str(data.get("deviceId") or "").strip() or install_id
-    
-    if not install_id or not cdkey:
-        _json_ok(handler, {"success": False, "message": "Missing installId or cdkey"})
-        return
-        
-    secret = os.environ.get("AIC_SIGNING_SECRET", "").strip()
-    if not secret:
-        _json_ok(handler, {"success": False, "message": "服务器未启用授权秘钥配置，请联系管理员"})
-        return
-        
-    try:
-        missing_padding = len(cdkey) % 4
-        padded_cdkey = cdkey
-        if missing_padding:
-            padded_cdkey += '=' * (4 - missing_padding)
-        decoded = base64.b64decode(padded_cdkey).decode("utf-8", errors="ignore")
-        parts = decoded.split(":")
-        if len(parts) != 3:
-            _json_ok(handler, {"success": False, "message": "激活码格式不正确"})
-            return
-            
-        key_install_id, key_expires_at_str, signature = parts
-        
-        if key_install_id != install_id:
-            _json_ok(handler, {"success": False, "message": "激活码与当前设备ID不匹配"})
-            return
-            
-        try:
-            expires_at = int(key_expires_at_str)
-        except ValueError:
-            _json_ok(handler, {"success": False, "message": "激活码时间格式错误"})
-            return
-            
-        if expires_at <= int(time.time()):
-            _json_ok(handler, {"success": False, "message": "该激活码已过期"})
-            return
-            
-        message = f"{key_install_id}:{key_expires_at_str}"
-        expected_sig = hmac.new(
-            secret.encode("utf-8"),
-            message.encode("utf-8"),
-            hashlib.sha256
-        ).hexdigest()
-        
-        if not hmac.compare_digest(expected_sig, signature):
-            _json_ok(handler, {"success": False, "message": "激活码验证失败（签名不匹配）"})
-            return
-            
-        subs = _load_subscriptions()
-        subs[install_id] = {
-            "expiresAt": expires_at,
-            "activatedAt": int(time.time()),
-            "cdkey": cdkey,
-            "deviceId": device_id
-        }
-        if _save_subscriptions(subs):
-            _json_ok(handler, {
-                "success": True,
-                "data": {
-                    "status": "active",
-                    "expiresAt": expires_at,
-                    "entitledModelIds": _get_all_entitled_model_ids()
-                }
-            })
-        else:
-            _json_ok(handler, {"success": False, "message": "服务器保存激活状态失败"})
-            
-    except Exception as e:
-        _json_ok(handler, {"success": False, "message": f"解析激活码失败: {str(e)}"})
-
-
 class Handler(http.server.SimpleHTTPRequestHandler):
 
     def __init__(self, *args, **kwargs):
@@ -2798,10 +2581,6 @@ class Handler(http.server.SimpleHTTPRequestHandler):
     # ════════════════════════════════════════════════════
     def do_GET(self):
         path = self.path.split("?")[0]
-        if path == "/api/subscription/status":
-            _handle_central_subscription_status(self)
-            return
-
         if not _enforce_local_api_access(self, path):
             return
 
@@ -2836,10 +2615,6 @@ class Handler(http.server.SimpleHTTPRequestHandler):
     # ════════════════════════════════════════════════════
     def do_POST(self):
         path = self.path.split("?")[0]
-        if path == "/api/subscription/activate":
-            _handle_central_subscription_activate(self)
-            return
-
         if not _enforce_local_api_access(self, path):
             return
 

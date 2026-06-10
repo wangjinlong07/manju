@@ -1,0 +1,28 @@
+version: "3.8"
+
+services:
+  manju-server:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: manju-server
+    image: manju-server:latest
+    restart: unless-stopped
+    ports:
+      - "8777:8777"
+    # 如果您的服务器其他组件（如其他反向代理或中间件）需要通过 Host 网络直接通信，
+    # 可以解除下方 network_mode 的注释，并注释掉上面的 ports 端口映射。
+    # network_mode: host
+    env_file:
+      - .env
+    volumes:
+      # 将数据、配置以及输出目录映射到指定的宿主机 pilipulu 目录，实现持久化存储
+      - "/Users/admin/my project/manju/data:/app/data"
+      - "/Users/admin/my project/manju/user:/app/user"
+      - "/Users/admin/my project/manju/output:/app/output"
+      # 自定义提示音替换（将本地的音频文件覆盖容器内的默认铃声）
+    logging:
+      driver: json-file
+      options:
+        max-size: "50m"
+        max-file: "3"

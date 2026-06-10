@@ -1,0 +1,684 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AICanvas 订阅卡密生成器</title>
+    <!-- 引入高品质现代字体 -->
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --primary: #6366f1;
+            --primary-hover: #4f46e5;
+            --primary-gradient: linear-gradient(135deg, #818cf8 0%, #6366f1 100%);
+            --accent: #10b981;
+            --bg-gradient: radial-gradient(circle at top right, #1e1b4b 0%, #0f172a 100%);
+            --card-bg: rgba(30, 41, 59, 0.7);
+            --card-border: rgba(255, 255, 255, 0.08);
+            --text-main: #f8fafc;
+            --text-muted: #94a3b8;
+            --input-bg: rgba(15, 23, 42, 0.6);
+            --input-border: rgba(255, 255, 255, 0.1);
+            --input-focus: rgba(99, 102, 241, 0.4);
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            font-family: 'Outfit', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+            -webkit-tap-highlight-color: transparent;
+        }
+
+        body {
+            background: var(--bg-gradient);
+            color: var(--text-main);
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+            overflow-x: hidden;
+        }
+
+        /* 装饰性背景光晕 */
+        .glow {
+            position: absolute;
+            width: 300px;
+            height: 300px;
+            background: rgba(99, 102, 241, 0.15);
+            filter: blur(100px);
+            border-radius: 50%;
+            z-index: 0;
+            pointer-events: none;
+        }
+        .glow-1 { top: 10%; right: 10%; }
+        .glow-2 { bottom: 10%; left: 10%; background: rgba(16, 185, 129, 0.1); }
+
+        .container {
+            width: 100%;
+            max-width: 480px;
+            background: var(--card-bg);
+            border: 1px solid var(--card-border);
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+            border-radius: 24px;
+            padding: 30px 24px;
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.3);
+            z-index: 1;
+            position: relative;
+            transform: translateY(0);
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        .header {
+            text-align: center;
+            margin-bottom: 28px;
+        }
+
+        .logo-container {
+            width: 64px;
+            height: 64px;
+            background: var(--primary-gradient);
+            border-radius: 18px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin: 0 auto 16px;
+            box-shadow: 0 8px 16px rgba(99, 102, 241, 0.3);
+        }
+
+        .logo-icon {
+            font-size: 28px;
+            color: white;
+            font-weight: bold;
+        }
+
+        .header h1 {
+            font-size: 22px;
+            font-weight: 700;
+            letter-spacing: -0.5px;
+            margin-bottom: 6px;
+            background: linear-gradient(135deg, #ffffff 0%, #cbd5e1 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        .header p {
+            font-size: 14px;
+            color: var(--text-muted);
+        }
+
+        .form-group {
+            margin-bottom: 20px;
+            position: relative;
+        }
+
+        .form-label {
+            display: block;
+            font-size: 13px;
+            font-weight: 600;
+            color: var(--text-muted);
+            margin-bottom: 8px;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .input-wrapper {
+            position: relative;
+            display: flex;
+            align-items: center;
+        }
+
+        .form-control {
+            width: 100%;
+            background: var(--input-bg);
+            border: 1px solid var(--input-border);
+            border-radius: 12px;
+            padding: 14px 16px;
+            color: var(--text-main);
+            font-size: 15px;
+            outline: none;
+            transition: all 0.25s ease;
+        }
+
+        .form-control:focus {
+            border-color: var(--primary);
+            box-shadow: 0 0 0 3px var(--input-focus);
+            background: rgba(15, 23, 42, 0.8);
+        }
+
+        .form-control::placeholder {
+            color: rgba(148, 163, 184, 0.4);
+        }
+
+        select.form-control {
+            appearance: none;
+            cursor: pointer;
+        }
+
+        .select-arrow {
+            position: absolute;
+            right: 16px;
+            pointer-events: none;
+            color: var(--text-muted);
+            font-size: 12px;
+        }
+
+        /* 密码显示/隐藏切换 */
+        .toggle-password {
+            position: absolute;
+            right: 16px;
+            cursor: pointer;
+            color: var(--text-muted);
+            font-size: 14px;
+            user-select: none;
+        }
+
+        .preview-info {
+            font-size: 13px;
+            color: var(--accent);
+            margin-top: 6px;
+            display: flex;
+            align-items: center;
+            gap: 4px;
+        }
+
+        .btn-generate {
+            width: 100%;
+            background: var(--primary-gradient);
+            color: white;
+            border: none;
+            border-radius: 14px;
+            padding: 16px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            box-shadow: 0 6px 20px rgba(99, 102, 241, 0.25);
+            transition: all 0.25s ease;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            margin-top: 10px;
+        }
+
+        .btn-generate:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 25px rgba(99, 102, 241, 0.35);
+        }
+
+        .btn-generate:active {
+            transform: translateY(1px);
+        }
+
+        .result-container {
+            margin-top: 28px;
+            background: rgba(15, 23, 42, 0.5);
+            border: 1px dashed rgba(255, 255, 255, 0.1);
+            border-radius: 16px;
+            padding: 20px;
+            display: none;
+            animation: fadeIn 0.4s ease forwards;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .result-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 12px;
+        }
+
+        .result-title {
+            font-size: 13px;
+            font-weight: 600;
+            color: var(--text-muted);
+            text-transform: uppercase;
+        }
+
+        .result-key {
+            width: 100%;
+            background: rgba(0, 0, 0, 0.3);
+            border: 1px solid rgba(255, 255, 255, 0.05);
+            border-radius: 10px;
+            padding: 12px;
+            font-family: monospace;
+            font-size: 13px;
+            word-break: break-all;
+            color: #38bdf8;
+            user-select: all;
+            margin-bottom: 14px;
+            max-height: 100px;
+            overflow-y: auto;
+        }
+
+        .btn-copy {
+            background: rgba(16, 185, 129, 0.15);
+            border: 1px solid rgba(16, 185, 129, 0.3);
+            color: var(--accent);
+            border-radius: 10px;
+            padding: 10px 16px;
+            font-size: 14px;
+            font-weight: 600;
+            cursor: pointer;
+            width: 100%;
+            transition: all 0.2s ease;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 6px;
+        }
+
+        .btn-copy:hover {
+            background: rgba(16, 185, 129, 0.25);
+        }
+
+        /* 吐司提示样式 */
+        .toast {
+            position: fixed;
+            bottom: 30px;
+            left: 50%;
+            transform: translateX(-50%) translateY(100px);
+            background: rgba(15, 23, 42, 0.9);
+            border: 1px solid var(--accent);
+            color: white;
+            padding: 12px 24px;
+            border-radius: 50px;
+            font-size: 14px;
+            font-weight: 500;
+            z-index: 100;
+            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.5);
+            transition: transform 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275), opacity 0.3s;
+            opacity: 0;
+            pointer-events: none;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .toast.show {
+            transform: translateX(-50%) translateY(0);
+            opacity: 1;
+        }
+    </style>
+</head>
+<body>
+
+    <div class="glow glow-1"></div>
+    <div class="glow glow-2"></div>
+
+    <div class="container">
+        <div class="header">
+            <div class="logo-container">
+                <span class="logo-icon">🔑</span>
+            </div>
+            <h1>AICanvas 卡密生成器</h1>
+            <p>基于 HMAC-SHA256 签名生成高安全订阅卡密</p>
+        </div>
+
+        <form id="keyForm" onsubmit="handleGenerate(event)">
+            <!-- 设备ID -->
+            <div class="form-group">
+                <label class="form-label" for="installId">用户设备唯一 ID (installId)</label>
+                <input type="text" id="installId" class="form-control" placeholder="从客户端获取，例如: 9f7b6c5a-..." required autocomplete="off">
+            </div>
+
+            <!-- 有效天数 -->
+            <div class="form-group">
+                <label class="form-label" for="days">授权时长 (天)</label>
+                <div class="input-wrapper">
+                    <select id="days" class="form-control" onchange="updateExpirePreview()">
+                        <option value="7">7 天 (体验)</option>
+                        <option value="30" selected>30 天 (月卡)</option>
+                        <option value="90">90 天 (季卡)</option>
+                        <option value="365">365 天 (年卡)</option>
+                        <option value="custom">自定义天数...</option>
+                    </select>
+                    <span class="select-arrow">▼</span>
+                </div>
+                
+                <!-- 自定义天数输入框 -->
+                <div id="customDaysWrapper" style="display: none; margin-top: 10px;">
+                    <input type="number" id="customDays" class="form-control" placeholder="输入自定义天数" min="1" oninput="updateExpirePreview()">
+                </div>
+
+                <div class="preview-info" id="expirePreview">
+                    <span>📅</span> <span id="expireDateText">计算中...</span>
+                </div>
+            </div>
+
+            <!-- 服务端签名秘钥 -->
+            <div class="form-group">
+                <label class="form-label" for="secret">服务器签名秘钥 (Secret)</label>
+                <div class="input-wrapper">
+                    <input type="password" id="secret" class="form-control" placeholder="与服务器上环境变量 AIC_SIGNING_SECRET 保持一致" required autocomplete="current-password">
+                    <span class="toggle-password" onclick="togglePasswordVisibility()">👁️</span>
+                </div>
+            </div>
+
+            <!-- 生成按钮 -->
+            <button type="submit" class="btn-generate">
+                <span>⚡</span> 生成安全激活码
+            </button>
+        </form>
+
+        <!-- 结果展示区域 -->
+        <div class="result-container" id="resultContainer">
+            <div class="result-header">
+                <span class="result-title">🎉 生成成功！请复制下方卡密</span>
+            </div>
+            <div class="result-key" id="cdkeyResult"></div>
+            <button type="button" class="btn-copy" onclick="copyCDKey()">
+                <span>📋</span> 复制卡密并发给用户
+            </button>
+        </div>
+    </div>
+
+    <!-- 弹窗式吐司提示 -->
+    <div class="toast" id="toast">
+        <span id="toastIcon">✅</span>
+        <span id="toastMsg">已复制到剪贴板</span>
+    </div>
+
+    <script>
+        // 初始化载入 localStorage 保存的秘钥
+        document.addEventListener('DOMContentLoaded', () => {
+            const savedSecret = localStorage.getItem('aic_signing_secret');
+            if (savedSecret) {
+                document.getElementById('secret').value = savedSecret;
+            }
+            updateExpirePreview();
+        });
+
+        // 监听自定义天数显示逻辑
+        document.getElementById('days').addEventListener('change', function() {
+            const customWrapper = document.getElementById('customDaysWrapper');
+            if (this.value === 'custom') {
+                customWrapper.style.display = 'block';
+                document.getElementById('customDays').required = true;
+                document.getElementById('customDays').focus();
+            } else {
+                customWrapper.style.display = 'none';
+                document.getElementById('customDays').required = false;
+            }
+            updateExpirePreview();
+        });
+
+        // 获取计算的过期天数
+        function getSelectedDays() {
+            const selectVal = document.getElementById('days').value;
+            if (selectVal === 'custom') {
+                const customVal = parseInt(document.getElementById('customDays').value);
+                return isNaN(customVal) || customVal < 1 ? 0 : customVal;
+            }
+            return parseInt(selectVal);
+        }
+
+        // 格式化日期时间
+        function formatDateTime(date) {
+            const y = date.getFullYear();
+            const m = String(date.getMonth() + 1).padStart(2, '0');
+            const d = String(date.getDate()).padStart(2, '0');
+            const h = String(date.getHours()).padStart(2, '0');
+            const min = String(date.getMinutes()).padStart(2, '0');
+            const s = String(date.getSeconds()).padStart(2, '0');
+            return `${y}-${m}-${d} ${h}:${min}:${s}`;
+        }
+
+        // 预览截止日期
+        function updateExpirePreview() {
+            const days = getSelectedDays();
+            if (days <= 0) {
+                document.getElementById('expireDateText').innerText = '请输入有效天数';
+                return;
+            }
+            const now = new Date();
+            const expireDate = new Date(now.getTime() + days * 24 * 60 * 60 * 1000);
+            document.getElementById('expireDateText').innerText = `有效期至: ${formatDateTime(expireDate)}`;
+        }
+
+        // 密码显示/隐藏
+        function togglePasswordVisibility() {
+            const secretInput = document.getElementById('secret');
+            const toggleIcon = document.querySelector('.toggle-password');
+            if (secretInput.type === 'password') {
+                secretInput.type = 'text';
+                toggleIcon.innerText = '🔒';
+            } else {
+                secretInput.type = 'password';
+                toggleIcon.innerText = '👁️';
+            }
+        }
+
+        // 统一提示框
+        function showToast(msg, icon = '✅') {
+            const toast = document.getElementById('toast');
+            document.getElementById('toastIcon').innerText = icon;
+            document.getElementById('toastMsg').innerText = msg;
+            toast.classList.add('show');
+            setTimeout(() => {
+                toast.classList.remove('show');
+            }, 2500);
+        }
+
+        // UTF-8 转 Base64
+        function utf8ToBase64(str) {
+            return btoa(encodeURIComponent(str).replace(/%([0-9A-F]{2})/g, function(match, p1) {
+                return String.fromCharCode('0x' + p1);
+            }));
+        }
+
+        // 自带简易 HMAC-SHA256 以防 Web Crypto API 受限于非 HTTPS 环境
+        function calculateHMACFallback(secret, message) {
+            // SHA256 辅助函数
+            function sha256_fallback(ascii) {
+                function rightRotate(value, amount) {
+                    return (value >>> amount) | (value << (32 - amount));
+                }
+                var words = [];
+                var asciiLength = ascii.length * 8;
+                var hash = [
+                    0x6a09e667, 0xbb67ae85, 0x3c6ef372, 0xa54ff53a,
+                    0x510e527f, 0x9b05688c, 0x1f83d9ab, 0x5be0cd19
+                ];
+                var k = [
+                    0x428a2f98, 0x71374491, 0xb5c0fbcf, 0xe9b5dba5, 0x3956c25b, 0x59f111f1, 0x923f82a4, 0xab1c5ed5,
+                    0xd807aa98, 0x12835b01, 0x243185be, 0x550c7dc3, 0x72be5d74, 0x80deb1fe, 0x9bdc06a7, 0xc19bf174,
+                    0xe49b69c1, 0xefbe4786, 0x0fc19dc6, 0x240ca1cc, 0x2de92c6f, 0x4a7484aa, 0x5cb0a9dc, 0x76f988da,
+                    0x983e5152, 0xa831c66d, 0xb00327c8, 0xbf597fc7, 0xc6e00bf3, 0xd5a79147, 0x06ca6351, 0x14292967,
+                    0x27b70a85, 0x2e1b2138, 0x4d2c6dfc, 0x53380d13, 0x650a7354, 0x766a0abb, 0x81c2c92e, 0x92722c85,
+                    0xa2bfe8a1, 0xa81a664b, 0xc24b8b70, 0xc76c51a3, 0xd192e819, 0xd6990624, 0xf40e3585, 0x106aa070,
+                    0x19a4c116, 0x1e376c08, 0x2748774c, 0x34b0bcb5, 0x391c0cb3, 0x4ed8aa4a, 0x5b9cca4f, 0x682e6ff3,
+                    0x748f82ee, 0x78a5636f, 0x84c87814, 0x8cc70208, 0x90befffa, 0xa4506ceb, 0xbef9a3f7, 0xc67178f2
+                ];
+                
+                ascii += '\x80';
+                while (ascii.length % 64 - 56) ascii += '\x00';
+                for (var i = 0; i < ascii.length; i++) {
+                    var j = ascii.charCodeAt(i);
+                    words[i >> 2] |= j << ((3 - i % 4) * 8);
+                }
+                words[words.length] = ((asciiLength / Math.pow(2, 32)) | 0);
+                words[words.length] = (asciiLength);
+                
+                for (var j = 0; j < words.length; ) {
+                    var w = words.slice(j, j += 16);
+                    var oldHash = hash.slice(0);
+                    hash = hash.slice(0, 8);
+                    
+                    for (var i = 0; i < 64; i++) {
+                        var w15 = w[i - 15], w2 = w[i - 2];
+                        var a = hash[0], e = hash[4];
+                        var temp1 = hash[7]
+                            + (rightRotate(e, 6) ^ rightRotate(e, 11) ^ rightRotate(e, 25))
+                            + ((e & hash[5]) ^ (~e & hash[6]))
+                            + k[i]
+                            + (w[i] = (i < 16) ? w[i] : (
+                                    w[i - 16]
+                                    + (rightRotate(w15, 7) ^ rightRotate(w15, 18) ^ (w15 >>> 3))
+                                    + w[i - 7]
+                                    + (rightRotate(w2, 17) ^ rightRotate(w2, 19) ^ (w2 >>> 10))
+                                ) | 0
+                            );
+                        var temp2 = (rightRotate(a, 2) ^ rightRotate(a, 13) ^ rightRotate(a, 22))
+                            + ((a & hash[1]) ^ (a & hash[2]) ^ (hash[1] & hash[2]));
+                        
+                        hash = [(temp1 + temp2) | 0].concat(hash);
+                        hash[4] = (hash[4] + temp1) | 0;
+                    }
+                    for (var i = 0; i < 8; i++) {
+                        hash[i] = (hash[i] + oldHash[i]) | 0;
+                    }
+                }
+                var result = '';
+                for (var i = 0; i < 8; i++) {
+                    for (var j = 3; j + 1; j--) {
+                        var b = (hash[i] >> (j * 8)) & 255;
+                        result += (b < 16 ? '0' : '') + b.toString(16);
+                    }
+                }
+                return result;
+            }
+
+            // HMAC 算法
+            var blockSize = 64;
+            if (secret.length > blockSize) {
+                secret = hexToString(sha256_fallback(secret));
+            }
+            while (secret.length < blockSize) {
+                secret += '\x00';
+            }
+            
+            var ipad = '', opad = '';
+            for (var i = 0; i < blockSize; i++) {
+                ipad += String.fromCharCode(secret.charCodeAt(i) ^ 0x36);
+                opad += String.fromCharCode(secret.charCodeAt(i) ^ 0x5C);
+            }
+            
+            var innerHash = sha256_fallback(ipad + message);
+            return sha256_fallback(opad + hexToString(innerHash));
+
+            function hexToString(hex) {
+                var str = '';
+                for (var i = 0; i < hex.length; i += 2) {
+                    str += String.fromCharCode(parseInt(hex.substr(i, 2), 16));
+                }
+                return str;
+            }
+        }
+
+        // Web Crypto API 计算 HMAC-SHA256
+        async function calculateHMACWebCrypto(secret, message) {
+            const encoder = new TextEncoder();
+            const keyData = encoder.encode(secret);
+            const messageData = encoder.encode(message);
+            
+            const cryptoKey = await crypto.subtle.importKey(
+                "raw",
+                keyData,
+                { name: "HMAC", hash: { name: "SHA-256" } },
+                false,
+                ["sign"]
+            );
+            
+            const signatureBuffer = await crypto.subtle.sign(
+                "HMAC",
+                cryptoKey,
+                messageData
+            );
+            
+            const hashArray = Array.from(new Uint8Array(signatureBuffer));
+            return hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
+        }
+
+        // 提交表单生成卡密
+        async function handleGenerate(event) {
+            event.preventDefault();
+            
+            const installId = document.getElementById('installId').value.trim();
+            const days = getSelectedDays();
+            const secret = document.getElementById('secret').value.trim();
+
+            if (!installId) {
+                showToast('请输入设备ID (installId)', '❌');
+                return;
+            }
+            if (days <= 0) {
+                showToast('请输入有效天数', '❌');
+                return;
+            }
+            if (!secret) {
+                showToast('请输入签名秘钥', '❌');
+                return;
+            }
+
+            // 保存秘钥到 localStorage
+            localStorage.setItem('aic_signing_secret', secret);
+
+            // 计算过期时间戳 (秒)
+            const nowSeconds = Math.floor(Date.now() / 1000);
+            const expiresAt = nowSeconds + days * 24 * 60 * 60;
+
+            const message = `${installId}:${expiresAt}`;
+            let signatureHex = '';
+
+            try {
+                // 优先尝试 Web Crypto API
+                if (window.crypto && window.crypto.subtle) {
+                    signatureHex = await calculateHMACWebCrypto(secret, message);
+                } else {
+                    // 降级使用纯 JS Fallback
+                    signatureHex = calculateHMACFallback(secret, message);
+                }
+            } catch (e) {
+                console.warn("Web Crypto API failed, using fallback:", e);
+                signatureHex = calculateHMACFallback(secret, message);
+            }
+
+            // 构建激活码 base64(installId:expiresAt:signature)
+            const combinedString = `${installId}:${expiresAt}:${signatureHex}`;
+            const cdkey = utf8ToBase64(combinedString);
+
+            // 渲染结果
+            document.getElementById('cdkeyResult').innerText = cdkey;
+            document.getElementById('resultContainer').style.display = 'block';
+            
+            // 自动滚动到结果区域
+            setTimeout(() => {
+                document.getElementById('resultContainer').scrollIntoView({ behavior: 'smooth' });
+            }, 100);
+
+            showToast('卡密生成成功！');
+        }
+
+        // 复制卡密
+        function copyCDKey() {
+            const cdkeyText = document.getElementById('cdkeyResult').innerText;
+            if (!cdkeyText) return;
+
+            navigator.clipboard.writeText(cdkeyText).then(() => {
+                showToast('卡密已成功复制到剪贴板！');
+            }).catch(err => {
+                // 降级方案：创建文本框手动选择复制
+                const textarea = document.createElement('textarea');
+                textarea.value = cdkeyText;
+                textarea.style.position = 'fixed';
+                document.body.appendChild(textarea);
+                textarea.select();
+                try {
+                    document.execCommand('copy');
+                    showToast('卡密已成功复制！');
+                } catch (e) {
+                    showToast('复制失败，请手动长按选择复制', '❌');
+                }
+                document.body.removeChild(textarea);
+            });
+        }
+    </script>
+</body>
+</html>

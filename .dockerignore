@@ -1,0 +1,37 @@
+.git
+.github
+.gitignore
+.gitattributes
+.idea
+.vscode
+.pytest_cache
+__pycache__
+*.pyc
+*.pyo
+*.pyd
+*.db
+*.log
+*.tmp
+node_modules
+npm-debug.log
+yarn-error.log
+
+# 排除本地持久化数据和临时输出以保证容器镜像纯净
+data/
+user/
+output/
+user/*.json
+data/*.json
+
+# 排除文档和客户端打包相关
+release_notes.txt
+dist/
+build/
+electron/
+native/
+*.bat
+*.exe
+*.dmg
+*.zip
+*.tar.gz
+*.rar
