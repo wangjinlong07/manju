@@ -329,15 +329,6 @@ def _handle_central_subscription_activate(handler):
             content = content.replace("    def do_POST(self):\n        path = self.path.split(\"?\")[0]", post_activate_block)
         print("  - 已注入 POST /api/v2/subscription/activate 路由")
 
-    # 6. 修正路由：仅拦截内部路径，让 /api/v2/ 走调度器（自动获取 .env 联系方式）
-    content = content.replace(
-        'if path in ("/api/v2/subscription/status", "/api/subscription/status"):',
-        'if path == "/api/subscription/status":'
-    )
-    content = content.replace(
-        'if path in ("/api/v2/subscription/activate", "/api/subscription/activate"):',
-        'if path == "/api/subscription/activate":'
-    )
     print("  - 已修正路由为仅拦截内部路径（/api/v2/ 走调度器获取联系方式）")
 
     with open(SERVER_PY, "w", encoding="utf-8") as f:

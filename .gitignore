@@ -78,6 +78,7 @@ electron-build/
 .electron/    
 **/.electron/
 
-*bak*
+*.bak
 .env
-.idea
+.idea/
+.pytest_cache/

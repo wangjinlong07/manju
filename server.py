@@ -2819,7 +2819,7 @@ class Handler(http.server.SimpleHTTPRequestHandler):
     # ════════════════════════════════════════════════════
     def do_GET(self):
         path = self.path.split("?")[0]
-        if path == "/api/subscription/status":
+        if path in ("/api/v2/subscription/status", "/api/subscription/status"):
             _handle_central_subscription_status(self)
             return
 
@@ -2857,7 +2857,7 @@ class Handler(http.server.SimpleHTTPRequestHandler):
     # ════════════════════════════════════════════════════
     def do_POST(self):
         path = self.path.split("?")[0]
-        if path == "/api/subscription/activate":
+        if path in ("/api/v2/subscription/activate", "/api/subscription/activate"):
             _handle_central_subscription_activate(self)
             return
 
