@@ -5,7 +5,7 @@
       "key": "runninghubVideoV54",
       "modelId": "runninghub/2041741496667348994",
       "workflowId": "2041741496667348994",
-      "displayName": "\u89c6\u9891\u7f16\u8f91V5.4",
+      "displayName": "视频编辑V5.4",
       "aliases": [
         "video_edit_v54",
         "video_edit.pro"
@@ -32,7 +32,7 @@
       "key": "runninghubVideoHd",
       "modelId": "runninghub/2047787809091620866",
       "workflowId": "2047787809091620866",
-      "displayName": "\u89c6\u9891\u9ad8\u6e05",
+      "displayName": "视频高清",
       "aliases": [
         "video_hd_vip",
         "video_hd.pro",
@@ -49,7 +49,7 @@
       "key": "runninghubCommercialDigitalHuman",
       "modelId": "runninghub/2055639633148563458",
       "workflowId": "2055639633148563458",
-      "displayName": "\u5546\u4e1a\u7ea7\u6570\u5b57\u4eba",
+      "displayName": "商业级数字人",
       "aliases": [
         "commercial_digital_human",
         "commercial_digital_human.pro",
@@ -60,7 +60,7 @@
       "key": "runninghubAdvancedVoiceClone",
       "modelId": "runninghub/2050165249344585729",
       "workflowId": "2050165249344585729",
-      "displayName": "\u8fdb\u9636\u58f0\u97f3\u514b\u9686",
+      "displayName": "进阶声音克隆",
       "aliases": [
         "advanced_voice_clone",
         "voice_clone.pro",
@@ -77,7 +77,7 @@
       "key": "dreaminaVideoVip",
       "modelId": "dreamina/video_vip",
       "workflowId": "",
-      "displayName": "\u5373\u68a6\u89c6\u9891",
+      "displayName": "即梦视频",
       "aliases": [
         "dreamina_video_vip",
         "dreamina.video_vip"
@@ -87,6 +87,175 @@
       ],
       "modelPrefixes": [
         "dreamina/"
+      ]
+    },
+    {
+      "key": "customApimartDoubaoVideo",
+      "modelId": "apimart/doubao-seedance-2.0",
+      "workflowId": "",
+      "displayName": "APImart 抖音 Seedance 视频",
+      "aliases": [
+        "apimart_doubao_video",
+        "doubao_seedance"
+      ],
+      "providers": [
+        "apimart"
+      ],
+      "modelPrefixes": [
+        "apimart/doubao-seedance-"
+      ]
+    },
+    {
+      "key": "customApimartKlingVideo",
+      "modelId": "apimart/kling-o1",
+      "workflowId": "",
+      "displayName": "APImart Kling 视频",
+      "aliases": [
+        "apimart_kling_video",
+        "kling_video"
+      ],
+      "providers": [
+        "apimart"
+      ],
+      "modelPrefixes": [
+        "apimart/kling-"
+      ]
+    },
+    {
+      "key": "customApimartOtherVideo",
+      "modelId": "apimart/happyhorse-1.0",
+      "workflowId": "",
+      "displayName": "APImart 其他视频模型",
+      "aliases": [
+        "apimart_other_video"
+      ],
+      "providers": [
+        "apimart"
+      ],
+      "modelPrefixes": [
+        "apimart/happyhorse-",
+        "apimart/veo",
+        "apimart/grok-",
+        "apimart/omni-",
+        "apimart/wan",
+        "apimart/minimax-",
+        "apimart/viduq"
+      ]
+    },
+    {
+      "key": "customAgnesVideo",
+      "modelId": "agnes/agnes-video-v2.0",
+      "workflowId": "",
+      "displayName": "Agnes 视频",
+      "aliases": [
+        "agnes_video"
+      ],
+      "providers": [
+        "agnes"
+      ],
+      "modelPrefixes": [
+        "agnes/"
+      ]
+    },
+    {
+      "key": "customVolcengineVideo",
+      "modelId": "volcengine/seedance-2.0",
+      "workflowId": "",
+      "displayName": "火山引擎 Seedance 视频",
+      "aliases": [
+        "volcengine_video",
+        "volcengine_seedance"
+      ],
+      "providers": [
+        "volcengine"
+      ],
+      "modelPrefixes": [
+        "volcengine/"
+      ]
+    },
+    {
+      "key": "customRunninghubModelVideo",
+      "modelId": "runninghub-model/seedance-2.0",
+      "workflowId": "",
+      "displayName": "RunningHub Model API 视频",
+      "aliases": [
+        "runninghub_model_video"
+      ],
+      "modelPrefixes": [
+        "runninghub-model/"
+      ],
+      "providers": [
+        "runninghub"
+      ]
+    },
+    {
+      "key": "runninghubVideoBasic",
+      "modelId": "runninghub/1971148165531475969",
+      "workflowId": "1971148165531475969",
+      "displayName": "RunningHub 基础视频",
+      "aliases": [
+        "video_basic",
+        "ai-app/1971148165531475969"
+      ]
+    },
+    {
+      "key": "runninghubVideoMatting",
+      "modelId": "runninghub/2037354967383674881",
+      "workflowId": "2037354967383674881",
+      "displayName": "RunningHub 视频抠图",
+      "aliases": [
+        "video_matting",
+        "ai-app/2037354967383674881"
+      ]
+    },
+    {
+      "key": "runninghubVideoMattingV2",
+      "modelId": "runninghub/2042569732972355585",
+      "workflowId": "2042569732972355585",
+      "displayName": "RunningHub 视频抠图V2",
+      "aliases": [
+        "video_matting_v2",
+        "ai-app/2042569732972355585"
+      ]
+    },
+    {
+      "key": "runninghubVideoLtx23",
+      "modelId": "runninghub/2039336644536442882",
+      "workflowId": "2039336644536442882",
+      "displayName": "RunningHub LTX 2.3视频",
+      "aliases": [
+        "video_ltx23",
+        "ai-app/2039336644536442882"
+      ]
+    },
+    {
+      "key": "runninghubVideoFrameInterpolation",
+      "modelId": "runninghub/2047784060881211393",
+      "workflowId": "2047784060881211393",
+      "displayName": "RunningHub 视频帧插值",
+      "aliases": [
+        "video_frame_interpolation",
+        "ai-app/2047784060881211393"
+      ]
+    },
+    {
+      "key": "runninghubVideoLipSync",
+      "modelId": "runninghub/2054101324521844738",
+      "workflowId": "2054101324521844738",
+      "displayName": "RunningHub 视频对口型",
+      "aliases": [
+        "video_lip_sync",
+        "ai-app/2054101324521844738"
+      ]
+    },
+    {
+      "key": "runninghubVideoWatermarkRemovalV2",
+      "modelId": "runninghub/2060613773890768898",
+      "workflowId": "2060613773890768898",
+      "displayName": "RunningHub 视频去水印V2",
+      "aliases": [
+        "video_watermark_removal_v2",
+        "ai-app/2060613773890768898"
       ]
     }
   ]

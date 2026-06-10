@@ -2443,6 +2443,22 @@ def _resolve_local_virtual_path(src_path):
 
 
 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 # ════════════════════════════════════════════════════════════════
 #  Central subscription licensing handlers (HMAC-SHA256 Based)
 # ════════════════════════════════════════════════════════════════
@@ -2450,6 +2466,11 @@ _SUBSCRIPTION_DB_LOCK = threading.Lock()
 SUBSCRIPTION_DB_FILE = os.path.join("data", "subscriptions.json")
 
 CUSTOM_VIP_MODELS = [
+    "apimart/doubao-seedance-2.0",
+    "apimart/doubao-seedance-2.0-face",
+    "apimart/doubao-seedance-1-5-pro",
+    "apimart/kling-o1",
+    "agnes/agnes-video-v2.0",
     "apimart/doubao-seedance-2.0-fast",
     "apimart/doubao-seedance-2.0-fast-face",
     "apimart/doubao-seedance-1-0-pro-quality",

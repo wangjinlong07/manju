@@ -77,3 +77,7 @@ electron-build/
 # Ignore electron runtime files
 .electron/    
 **/.electron/
+
+*bak*
+.env
+.idea

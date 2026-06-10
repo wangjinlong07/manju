@@ -11,6 +11,7 @@ AICanvas 定制化修改一键应用与升级助手 (apply_customizations.py)
 import os
 import re
 import shutil
+import json
 
 # 定义要修改的文件路径
 DIRECTORY = os.path.dirname(os.path.abspath(__file__))
@@ -91,6 +92,11 @@ _SUBSCRIPTION_DB_LOCK = threading.Lock()
 SUBSCRIPTION_DB_FILE = os.path.join("data", "subscriptions.json")
 
 CUSTOM_VIP_MODELS = [
+    "apimart/doubao-seedance-2.0",
+    "apimart/doubao-seedance-2.0-face",
+    "apimart/doubao-seedance-1-5-pro",
+    "apimart/kling-o1",
+    "agnes/agnes-video-v2.0",
     "apimart/doubao-seedance-2.0-fast",
     "apimart/doubao-seedance-2.0-fast-face",
     "apimart/doubao-seedance-1-0-pro-quality",
@@ -540,35 +546,52 @@ def patch_subscription_access_js():
     with open(SUBSCRIPTION_ACCESS_JS, "r", encoding="utf-8") as f:
         content = f.read()
         
-    # 如果已经注入过最新的，则不重复注入
-    if "volcengine/seedance-2.0-fast" in content:
-        print("  - subscriptionAccess.js 已注入过最新自定义 VIP 模型 ID")
+    # 检查是否已经注入过新模型和工作流
+    if "apimart/kling-o1" in content and "1971148165531475969" in content:
+        print("  - subscriptionAccess.js 已注入过最新自定义 VIP 模型和工作流")
         return True
-        
-    # 先清除已有的旧注入代码（如果存在）
-    old_inject_code = """try{["apimart/omni-flash-ext","apimart/minimax-hailuo-2.3","apimart/kling-v1-5","apimart/doubao-seedance-2.0-fast-face","apimart/doubao-seedance-1-0-pro-fast","apimart/doubao-seedance-1-0-pro-quality","runninghub-model/happyhorse-1.0","runninghub-model/veo3","volcengine/seedance-2.0"].forEach(id=>{if(typeof VIDEO_VIP_MODEL_ID_SET!=='undefined')VIDEO_VIP_MODEL_ID_SET.add(id);if(typeof VIDEO_VIP_MODEL_IDS!=='undefined')VIDEO_VIP_MODEL_IDS.push(id);});}catch(e){}"""
-    content = content.replace(old_inject_code, "")
-        
-    inject_code = """try{["apimart/doubao-seedance-2.0-fast","apimart/doubao-seedance-2.0-fast-face","apimart/doubao-seedance-1-0-pro-quality","apimart/doubao-seedance-1-0-pro-fast","apimart/happyhorse-1.0","apimart/veo3-fast","apimart/grok-imagine-1.0","apimart/omni-flash-ext","apimart/wan2.7","apimart/kling-v3-omni","apimart/kling-v3","apimart/minimax-hailuo","apimart/minimax-hailuo-2.3","apimart/kling-v1-5","apimart/viduq3","volcengine/seedance-2.0","volcengine/seedance-2.0-fast","runninghub-model/seedance-2.0","runninghub-model/happyhorse-1.0","runninghub-model/veo3","runninghub-model/wan2.7","runninghub-model/hailuo-02","runninghub-model/hailuo-2.3","runninghub-model/kling-v3","runninghub-model/kling-o3","runninghub-model/kling-video-o1"].forEach(id=>{if(typeof VIDEO_VIP_MODEL_ID_SET!=='undefined')VIDEO_VIP_MODEL_ID_SET.add(id);if(typeof VIDEO_VIP_MODEL_IDS!=='undefined')VIDEO_VIP_MODEL_IDS.push(id);});}catch(e){}"""
     
-    target = "_clearSubscriptionAuthorizationImpl=typeof _0x1023ec==='function'?_0x1023ec:a571_0x5be75e;}"
-    replacement = target + inject_code
+    # 方案：在硬编码的 subscriptionGateManifest.gates 数组末尾（dreaminaVideoVip gate之后）注入我们的新gates
     
-    if target in content:
-        content = content.replace(target, replacement)
-        print("  - 成功向 subscriptionAccess.js 注入自定义 VIP 模型 ID")
-    else:
-        # 如果格式有细微差异，尝试直接在末尾追加
-        content = content.rstrip()
-        if content.endswith("}"):
-            content = content + inject_code
-            print("  - subscriptionAccess.js 尾部追加注入自定义 VIP 模型 ID")
-        else:
-            print("❌ 未在 subscriptionAccess.js 中找到合适的注入位置")
-            return False
-            
+    # 查找 dreaminaVideoVip gate 的结束位置
+    # 匹配: 'modelPrefixes':[a571_0x2f8420(0x1f7)]}]};
+    dreamina_end_pattern = r"'modelPrefixes':\[a571_0x2f8420\([^\)]+\)\]}\]\};"
+    
+    if not re.search(dreamina_end_pattern, content):
+        print("❌ 未找到 dreaminaVideoVip gate 的结束位置")
+        return False
+    
+    # 构造新的 gates JavaScript 代码（紧凑格式，匹配原文件风格）
+    new_gates_js = """,{'key':'customApimartDoubaoVideo','modelId':'apimart/doubao-seedance-2.0','workflowId':'','displayName':'APImart 抖音 Seedance 视频','aliases':['apimart_doubao_video','doubao_seedance'],'providers':['apimart'],'modelPrefixes':['apimart/doubao-seedance-']},{'key':'customApimartKlingVideo','modelId':'apimart/kling-o1','workflowId':'','displayName':'APImart Kling 视频','aliases':['apimart_kling_video','kling_video'],'providers':['apimart'],'modelPrefixes':['apimart/kling-']},{'key':'customApimartOtherVideo','modelId':'apimart/happyhorse-1.0','workflowId':'','displayName':'APImart 其他视频模型','aliases':['apimart_other_video'],'providers':['apimart'],'modelPrefixes':['apimart/happyhorse-','apimart/veo','apimart/grok-','apimart/omni-','apimart/wan','apimart/minimax-','apimart/viduq']},{'key':'customAgnesVideo','modelId':'agnes/agnes-video-v2.0','workflowId':'','displayName':'Agnes 视频','aliases':['agnes_video'],'providers':['agnes'],'modelPrefixes':['agnes/']},{'key':'customVolcengineVideo','modelId':'volcengine/seedance-2.0','workflowId':'','displayName':'火山引擎 Seedance 视频','aliases':['volcengine_video','volcengine_seedance'],'providers':['volcengine'],'modelPrefixes':['volcengine/']},{'key':'customRunninghubModelVideo','modelId':'runninghub-model/seedance-2.0','workflowId':'','displayName':'RunningHub Model API 视频','aliases':['runninghub_model_video'],'providers':['runninghub'],'modelPrefixes':['runninghub-model/']},{'key':'runninghubVideoBasic','modelId':'runninghub/1971148165531475969','workflowId':'1971148165531475969','displayName':'RunningHub 基础视频','aliases':['video_basic','ai-app/1971148165531475969']},{'key':'runninghubVideoMatting','modelId':'runninghub/2037354967383674881','workflowId':'2037354967383674881','displayName':'RunningHub 视频抠图','aliases':['video_matting','ai-app/2037354967383674881']},{'key':'runninghubVideoMattingV2','modelId':'runninghub/2042569732972355585','workflowId':'2042569732972355585','displayName':'RunningHub 视频抠图V2','aliases':['video_matting_v2','ai-app/2042569732972355585']},{'key':'runninghubVideoLtx23','modelId':'runninghub/2039336644536442882','workflowId':'2039336644536442882','displayName':'RunningHub LTX 2.3视频','aliases':['video_ltx23','ai-app/2039336644536442882']},{'key':'runninghubVideoFrameInterpolation','modelId':'runninghub/2047784060881211393','workflowId':'2047784060881211393','displayName':'RunningHub 视频帧插值','aliases':['video_frame_interpolation','ai-app/2047784060881211393']},{'key':'runninghubVideoLipSync','modelId':'runninghub/2054101324521844738','workflowId':'2054101324521844738','displayName':'RunningHub 视频对口型','aliases':['video_lip_sync','ai-app/2054101324521844738']},{'key':'runninghubVideoWatermarkRemovalV2','modelId':'runninghub/2060613773890768898','workflowId':'2060613773890768898','displayName':'RunningHub 视频去水印V2','aliases':['video_watermark_removal_v2','ai-app/2060613773890768898']}"""
+    
+    # 在 dreaminaVideoVip gate 的 ]} 之前注入新的 gates
+    content = re.sub(
+        r"('modelPrefixes':\[a571_0x2f8420\([^\)]+\)\]})(\]\};)",
+        r"\1" + new_gates_js + r"\2",
+        content
+    )
+    
+    if "apimart/kling-o1" not in content:
+        print("❌ 注入新 gates 到硬编码 manifest 失败")
+        return False
+    
+    print("  - 成功注入 13 个新 gates 到硬编码的 subscriptionGateManifest")
+    
+    # 清除末尾可能存在的旧注入代码
+    old_inject_patterns = [
+        """try{["apimart/omni-flash-ext","apimart/minimax-hailuo-2.3","apimart/kling-v1-5","apimart/doubao-seedance-2.0-fast-face","apimart/doubao-seedance-1-0-pro-fast","apimart/doubao-seedance-1-0-pro-quality","runninghub-model/happyhorse-1.0","runninghub-model/veo3","volcengine/seedance-2.0"].forEach(id=>{if(typeof VIDEO_VIP_MODEL_ID_SET!=='undefined')VIDEO_VIP_MODEL_ID_SET.add(id);if(typeof VIDEO_VIP_MODEL_IDS!=='undefined')VIDEO_VIP_MODEL_IDS.push(id);});}catch(e){}""",
+        """try{["apimart/doubao-seedance-2.0-fast","apimart/doubao-seedance-2.0-fast-face","apimart/doubao-seedance-1-0-pro-quality","apimart/doubao-seedance-1-0-pro-fast","apimart/happyhorse-1.0","apimart/veo3-fast","apimart/grok-imagine-1.0","apimart/omni-flash-ext","apimart/wan2.7","apimart/kling-v3-omni","apimart/kling-v3","apimart/minimax-hailuo","apimart/minimax-hailuo-2.3","apimart/kling-v1-5","apimart/viduq3","volcengine/seedance-2.0","volcengine/seedance-2.0-fast","runninghub-model/seedance-2.0","runninghub-model/happyhorse-1.0","runninghub-model/veo3","runninghub-model/wan2.7","runninghub-model/hailuo-02","runninghub-model/hailuo-2.3","runninghub-model/kling-v3","runninghub-model/kling-o3","runninghub-model/kling-video-o1"].forEach(id=>{if(typeof VIDEO_VIP_MODEL_ID_SET!=='undefined')VIDEO_VIP_MODEL_ID_SET.add(id);if(typeof VIDEO_VIP_MODEL_IDS!=='undefined')VIDEO_VIP_MODEL_IDS.push(id);});}catch(e){}""",
+        """try{["apimart/doubao-seedance-2.0","apimart/doubao-seedance-2.0-face","apimart/doubao-seedance-1-5-pro","apimart/kling-o1","agnes/agnes-video-v2.0","apimart/doubao-seedance-2.0-fast","apimart/doubao-seedance-2.0-fast-face","apimart/doubao-seedance-1-0-pro-quality","apimart/doubao-seedance-1-0-pro-fast","apimart/happyhorse-1.0","apimart/veo3-fast","apimart/grok-imagine-1.0","apimart/omni-flash-ext","apimart/wan2.7","apimart/kling-v3-omni","apimart/kling-v3","apimart/minimax-hailuo","apimart/minimax-hailuo-2.3","apimart/kling-v1-5","apimart/viduq3","volcengine/seedance-2.0","volcengine/seedance-2.0-fast","runninghub-model/seedance-2.0","runninghub-model/happyhorse-1.0","runninghub-model/veo3","runninghub-model/wan2.7","runninghub-model/hailuo-02","runninghub-model/hailuo-2.3","runninghub-model/kling-v3","runninghub-model/kling-o3","runninghub-model/kling-video-o1"].forEach(id=>{if(typeof VIDEO_VIP_MODEL_ID_SET!=='undefined')VIDEO_VIP_MODEL_ID_SET.add(id);if(typeof VIDEO_VIP_MODEL_IDS!=='undefined')VIDEO_VIP_MODEL_IDS.push(id);});}catch(e){}"""
+    ]
+    
+    for old_code in old_inject_patterns:
+        content = content.replace(old_code, "")
+    
+    print("  - 已清除旧的末尾注入代码（已不再需要，因为直接修改了 manifest）")
+        
     with open(SUBSCRIPTION_ACCESS_JS, "w", encoding="utf-8") as f:
         f.write(content)
+    print("🎉 subscriptionAccess.js 修改完成！")
     return True
 
 def patch_vendor_video_manifests():
@@ -674,6 +697,186 @@ def patch_parameterPanelModule_js():
         print("❌ 未能在 parameterPanelModule.js 中找到目标 VIP 校验代码进行替换")
         return False
 
+def patch_subscription_gate_manifest_json():
+    """
+    修复 subscriptionGateManifest.json，为自定义VIP模型添加gate条目
+    解决前端不显示VIP badge的问题
+    """
+    print("🔧 正在处理 subscriptionGateManifest.json...")
+    manifest_path = os.path.join(
+        DIRECTORY, "src", "manifests", "subscription", "subscriptionGateManifest.json"
+    )
+    
+    if not os.path.exists(manifest_path):
+        print("❌ 未找到 subscriptionGateManifest.json")
+        return False
+    
+    make_backup(manifest_path)
+    
+    # 读取现有的 manifest
+    with open(manifest_path, "r", encoding="utf-8") as f:
+        manifest = json.load(f)
+    
+    # 确保 gates 数组存在
+    if "gates" not in manifest or not isinstance(manifest["gates"], list):
+        print("❌ subscriptionGateManifest.json 格式不正确")
+        return False
+    
+    # 定义需要添加的gate条目（6个模型gate + 7个工作流gate）
+    new_gates = [
+        # ============ 模型 gates ============
+        {
+            "key": "customApimartDoubaoVideo",
+            "modelId": "apimart/doubao-seedance-2.0",
+            "workflowId": "",
+            "displayName": "APImart 抖音 Seedance 视频",
+            "aliases": [
+                "apimart_doubao_video",
+                "doubao_seedance"
+            ],
+            "providers": ["apimart"],
+            "modelPrefixes": ["apimart/doubao-seedance-"]
+        },
+        {
+            "key": "customApimartKlingVideo",
+            "modelId": "apimart/kling-o1",
+            "workflowId": "",
+            "displayName": "APImart Kling 视频",
+            "aliases": [
+                "apimart_kling_video",
+                "kling_video"
+            ],
+            "providers": ["apimart"],
+            "modelPrefixes": ["apimart/kling-"]
+        },
+        {
+            "key": "customApimartOtherVideo",
+            "modelId": "apimart/happyhorse-1.0",
+            "workflowId": "",
+            "displayName": "APImart 其他视频模型",
+            "aliases": [
+                "apimart_other_video"
+            ],
+            "providers": ["apimart"],
+            "modelPrefixes": [
+                "apimart/happyhorse-",
+                "apimart/veo",
+                "apimart/grok-",
+                "apimart/omni-",
+                "apimart/wan",
+                "apimart/minimax-",
+                "apimart/viduq"
+            ]
+        },
+        {
+            "key": "customAgnesVideo",
+            "modelId": "agnes/agnes-video-v2.0",
+            "workflowId": "",
+            "displayName": "Agnes 视频",
+            "aliases": [
+                "agnes_video"
+            ],
+            "providers": ["agnes"],
+            "modelPrefixes": ["agnes/"]
+        },
+        {
+            "key": "customVolcengineVideo",
+            "modelId": "volcengine/seedance-2.0",
+            "workflowId": "",
+            "displayName": "火山引擎 Seedance 视频",
+            "aliases": [
+                "volcengine_video",
+                "volcengine_seedance"
+            ],
+            "providers": ["volcengine"],
+            "modelPrefixes": ["volcengine/"]
+        },
+        {
+            "key": "customRunninghubModelVideo",
+            "modelId": "runninghub-model/seedance-2.0",
+            "workflowId": "",
+            "displayName": "RunningHub Model API 视频",
+            "aliases": [
+                "runninghub_model_video"
+            ],
+            "providers": ["runninghub"],
+            "modelPrefixes": ["runninghub-model/"]
+        },
+        # ============ 工作流 gates ============
+        {
+            "key": "runninghubVideoBasic",
+            "modelId": "runninghub/1971148165531475969",
+            "workflowId": "1971148165531475969",
+            "displayName": "RunningHub 基础视频",
+            "aliases": ["video_basic", "ai-app/1971148165531475969"]
+        },
+        {
+            "key": "runninghubVideoMatting",
+            "modelId": "runninghub/2037354967383674881",
+            "workflowId": "2037354967383674881",
+            "displayName": "RunningHub 视频抠图",
+            "aliases": ["video_matting", "ai-app/2037354967383674881"]
+        },
+        {
+            "key": "runninghubVideoMattingV2",
+            "modelId": "runninghub/2042569732972355585",
+            "workflowId": "2042569732972355585",
+            "displayName": "RunningHub 视频抠图V2",
+            "aliases": ["video_matting_v2", "ai-app/2042569732972355585"]
+        },
+        {
+            "key": "runninghubVideoLtx23",
+            "modelId": "runninghub/2039336644536442882",
+            "workflowId": "2039336644536442882",
+            "displayName": "RunningHub LTX 2.3视频",
+            "aliases": ["video_ltx23", "ai-app/2039336644536442882"]
+        },
+        {
+            "key": "runninghubVideoFrameInterpolation",
+            "modelId": "runninghub/2047784060881211393",
+            "workflowId": "2047784060881211393",
+            "displayName": "RunningHub 视频帧插值",
+            "aliases": ["video_frame_interpolation", "ai-app/2047784060881211393"]
+        },
+        {
+            "key": "runninghubVideoLipSync",
+            "modelId": "runninghub/2054101324521844738",
+            "workflowId": "2054101324521844738",
+            "displayName": "RunningHub 视频对口型",
+            "aliases": ["video_lip_sync", "ai-app/2054101324521844738"]
+        },
+        {
+            "key": "runninghubVideoWatermarkRemovalV2",
+            "modelId": "runninghub/2060613773890768898",
+            "workflowId": "2060613773890768898",
+            "displayName": "RunningHub 视频去水印V2",
+            "aliases": ["video_watermark_removal_v2", "ai-app/2060613773890768898"]
+        }
+    ]
+    
+    # 检查哪些gate需要添加（避免重复）
+    existing_keys = {gate.get("key") for gate in manifest["gates"]}
+    gates_to_add = [gate for gate in new_gates if gate["key"] not in existing_keys]
+    
+    if not gates_to_add:
+        print("  - subscriptionGateManifest.json 已包含所有自定义VIP模型和工作流gate，无需添加")
+        return True
+    
+    # 添加新的gate条目
+    manifest["gates"].extend(gates_to_add)
+    
+    # 写回文件（格式化输出，保持可读性）
+    with open(manifest_path, "w", encoding="utf-8") as f:
+        json.dump(manifest, f, ensure_ascii=False, indent=2)
+    
+    print(f"  - 成功添加 {len(gates_to_add)} 个VIP gate条目:")
+    for gate in gates_to_add:
+        gate_type = "工作流" if gate.get("workflowId") else "模型"
+        print(f"    • {gate['key']}: {gate['displayName']} ({gate_type})")
+    
+    print("🎉 subscriptionGateManifest.json 修改完成！")
+    return True
+
 def patch_index_html():
     print("🔧 正在处理 index.html...")
     index_path = os.path.join(DIRECTORY, "index.html")
@@ -742,6 +945,7 @@ if __name__ == "__main__":
     s3 = patch_style_css()
     s4 = patch_api_url_js()
     s5 = patch_subscription_access_js()
+    s5_5 = patch_subscription_gate_manifest_json()  # 修复自定义VIP模型的manifest定义
     s6 = patch_vendor_video_manifests()
     s6_2 = patch_dreamina_video_manifest()
     s6_3 = patch_runninghub_video_manifest()
@@ -749,7 +953,7 @@ if __name__ == "__main__":
     s6_5 = patch_parameterPanelModule_js()
     s7 = patch_index_html()
     
-    if all([s1, s2, s3, s4, s5, s6, s6_2, s6_3, s6_4, s6_5, s7]):
+    if all([s1, s2, s3, s4, s5, s5_5, s6, s6_2, s6_3, s6_4, s6_5, s7]):
         print("\n🏆 所有定制化修改已自动恢复应用成功！您可以正常启动 Docker / 本地运行。")
     else:
         print("\n⚠️ 某些文件在升级应用中发生异常，请检查控制台错误信息。")

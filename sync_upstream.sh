@@ -68,9 +68,12 @@ git checkout "$PREV_COMMIT" -- \
     Dockerfile \
     docker-compose.yml \
     dockerbuild.md \
+    .gitignore \
+    .env \
     key_generator.html \
     apply_customizations.py \
     sync_upstream.sh \
+    README.md \
     images/favicon.svg \
     images/wechat.png \
     .dockerignore > /dev/null 2>&1
