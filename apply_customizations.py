@@ -41,6 +41,13 @@ def patch_server_py():
     
     with open(SERVER_PY, "r", encoding="utf-8") as f:
         content = f.read()
+    
+    # 替换硬编码的原作者API地址为环境变量或本地地址
+    content = content.replace(
+        'OFFICIAL_SUBSCRIPTION_API_BASE = "https://api.ashuoai.com"',
+        'OFFICIAL_SUBSCRIPTION_API_BASE = os.environ.get("AIC_REMOTE_API_BASE", "http://127.0.0.1:8777")'
+    )
+    print("  - 已替换 OFFICIAL_SUBSCRIPTION_API_BASE 为可配置地址")
         
     # 0. 注入本地运行的 .env 加载器，以便在本地直接启动时加载环境配置和签名秘钥
     if "def _load_env_file():" not in content:
@@ -653,6 +660,106 @@ def patch_parameterPanelModelHelpers_js():
     # 修复前台部分下拉菜单漏掉 vip 的情况（比如 DreaminaTaskModelMenu）
     # 先清理可能存在的重复 'vip':!![] 标记
     content = re.sub(r"('vip':!!\s*\[\s*\]\s*,\s*)+", "'vip':!![],", content)
+    
+    with open(file_path, "w", encoding="utf-8") as f:
+        f.write(content)
+    return True
+
+def replace_hardcoded_api_urls():
+    """替换所有文件中的硬编码 API URL 和微信号"""
+    print("🔧 正在全局替换硬编码的原作者 API 地址和微信号...")
+    
+    # 要扫描的文件列表
+    files_to_scan = [
+        "src/core/stores/legacyInitialState.js",
+        "src/modules/subscriptionAccess.js",
+        "src/modules/app/appPanels.js",
+    ]
+    
+    old_url = "https://api.ashuoai.com"
+    # 替换为相对路径，会自动使用当前服务器地址
+    new_url_placeholder = "''+window.location.origin+''"
+    
+    # 微信号替换
+    old_wechat = "yumengashuo"
+    new_wechat = "vv2643162286"
+    
+    replaced_url_count = 0
+    replaced_wechat_count = 0
+    
+    for file_path in files_to_scan:
+        full_path = os.path.join(DIRECTORY, file_path)
+        if not os.path.exists(full_path):
+            print(f"  ⚠️  文件不存在: {file_path}")
+            continue
+            
+        make_backup(full_path)
+        
+        with open(full_path, "r", encoding="utf-8") as f:
+            content = f.read()
+        
+        # 计算替换次数
+        url_count_before = content.count(old_url)
+        wechat_count_before = content.count(old_wechat)
+        
+        modified = False
+        
+        # URL 替换
+        if url_count_before > 0:
+            # 先替换长路径
+            content = content.replace(
+                f'"{old_url}/static/contact/',
+                new_url_placeholder + "+'/'+'images/'+'"
+            )
+            
+            content = content.replace(
+                f"'{old_url}/static/contact/",
+                new_url_placeholder + "+'/'+'images/'+'"
+            )
+            
+            # 再替换根URL
+            content = content.replace(f'"{old_url}"', new_url_placeholder)
+            content = content.replace(f"'{old_url}'", new_url_placeholder)
+            url_count_after = content.count(old_url)
+            actual_replaced_url = url_count_before - url_count_after
+            
+            if actual_replaced_url > 0:
+                replaced_url_count += actual_replaced_url
+                modified = True
+                print(f"  ✅ {file_path}: 替换了 {actual_replaced_url} 处硬编码URL")
+        
+        # 微信号替换
+        if wechat_count_before > 0:
+            # 替换所有出现的旧微信号
+            content = content.replace(f'"{old_wechat}"', f'"{new_wechat}"')
+            content = content.replace(f"'{old_wechat}'", f"'{new_wechat}'")
+            
+            wechat_count_after = content.count(old_wechat)
+            actual_replaced_wechat = wechat_count_before - wechat_count_after
+            
+            if actual_replaced_wechat > 0:
+                replaced_wechat_count += actual_replaced_wechat
+                modified = True
+                print(f"  ✅ {file_path}: 替换了 {actual_replaced_wechat} 处微信号 {old_wechat} -> {new_wechat}")
+        
+        # 写回文件
+        if modified:
+            with open(full_path, "w", encoding="utf-8") as f:
+                f.write(content)
+        elif url_count_before == 0 and wechat_count_before == 0:
+            print(f"  ✓  {file_path}: 未发现需要替换的内容")
+    
+    if replaced_url_count > 0 or replaced_wechat_count > 0:
+        summary = []
+        if replaced_url_count > 0:
+            summary.append(f"{replaced_url_count} 处URL")
+        if replaced_wechat_count > 0:
+            summary.append(f"{replaced_wechat_count} 处微信号")
+        print(f"🎉 全局替换完成！共替换 {' 和 '.join(summary)}")
+    else:
+        print("  - 所有文件已经使用动态地址和新微信号，无需替换")
+    
+    return True
     target3 = "'attrs':{'data-dreamina-task-model':'1'}"
     if target3 in content and "'vip':!![],'attrs':" not in content:
         content = content.replace(target3, "'vip':!![],'attrs':{'data-dreamina-task-model':'1'}")
@@ -943,8 +1050,9 @@ if __name__ == "__main__":
     s6_4 = patch_parameterPanelModelHelpers_js()
     s6_5 = patch_parameterPanelModule_js()
     s7 = patch_index_html()
+    s8 = replace_hardcoded_api_urls()  # 替换硬编码API地址和微信号
     
-    if all([s1, s2, s3, s4, s5, s5_5, s6, s6_2, s6_3, s6_4, s6_5, s7]):
+    if all([s1, s2, s3, s4, s5, s5_5, s6, s6_2, s6_3, s6_4, s6_5, s7, s8]):
         print("\n🏆 所有定制化修改已自动恢复应用成功！您可以正常启动 Docker / 本地运行。")
     else:
         print("\n⚠️ 某些文件在升级应用中发生异常，请检查控制台错误信息。")

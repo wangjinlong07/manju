@@ -342,7 +342,7 @@ DEFAULT_SUB_CONTACT_URL = os.environ.get(
     "AIC_SUB_CONTACT_URL",
     DEFAULT_SUB_CONTACT_IMAGE_URL,
 ).strip()
-OFFICIAL_SUBSCRIPTION_API_BASE = "https://api.ashuoai.com"
+OFFICIAL_SUBSCRIPTION_API_BASE = os.environ.get("AIC_REMOTE_API_BASE", "http://127.0.0.1:8777")
 
 
 def _get_system_state_dir():
@@ -2440,6 +2440,8 @@ def _augment_saved_media_response(payload, abs_path, local_path):
 
 def _resolve_local_virtual_path(src_path):
     return MEDIA_FILE_ROUTE_SERVICE.resolve_local_virtual_path(src_path)
+
+
 
 
 
